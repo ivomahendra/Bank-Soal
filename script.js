@@ -13,6 +13,13 @@ const mapelByJenjang = {
     'SMA': ['Matematika', 'Fisika', 'Kimia', 'Biologi', 'Ekonomi', 'Sejarah', 'Geografi', 'Bahasa Indonesia', 'Bahasa Inggris']
 };
 
+// 🔹 OSN-specific subjects mapping
+const mapelByOSNLevel = {
+    'SD': ['Matematika', 'Ilmu Pengetahuan Alam (IPA)'],
+    'SMP': ['Matematika', 'Ilmu Pengetahuan Alam (IPA)', 'Ilmu Pengetahuan Sosial (IPS)'],
+    'SMA': ['Matematika', 'Fisika', 'Kimia', 'Biologi', 'Informatika/Komputer', 'Astronomi', 'Ekonomi', 'Kebumian', 'Geografi']
+};
+
 const materiKurikulumMerdeka = {
     'SD-Matematika': {
         '1': ['Bilangan 1-10', 'Penjumlahan dan Pengurangan', 'Mengukur Panjang', 'Mengenal Waktu'],
@@ -139,6 +146,7 @@ const kelasSelect = document.getElementById('kelas');
 const mapelSelect = document.getElementById('mapel');
 const jenisSelect = document.getElementById('jenis');
 const jumlahInput = document.getElementById('jumlah');
+const tingkatKesulitanSelect = document.getElementById('tingkatKesulitan');
 const materiSelect = document.getElementById('materi');
 const semesterSelect = document.getElementById('semester');
 const materiGroup = document.getElementById('materi-group');
@@ -150,19 +158,80 @@ const btnApplyFilter = document.getElementById('btnApplyFilter');
 const btnResetFilter = document.getElementById('btnResetFilter');
 
 // ========== FUNGSI DROPDOWN DINAMIS ==========
+function updateKelasOptions() {
+    const jenis = jenisSelect.value;
+    if (!jenis) {
+        kelasSelect.innerHTML = '<option value="">-- Pilih Jenis Ujian Dahulu --</option>';
+        return;
+    }
+    
+    let options = [];
+    if (jenis === 'OSN') {
+        // OSN: hanya SD (1-6), SMP (7-9), SMA (10-12) tanpa label lain
+        options = [
+            { value: '1', label: 'SD - Kelas 1' },
+            { value: '2', label: 'SD - Kelas 2' },
+            { value: '3', label: 'SD - Kelas 3' },
+            { value: '4', label: 'SD - Kelas 4' },
+            { value: '5', label: 'SD - Kelas 5' },
+            { value: '6', label: 'SD - Kelas 6' },
+            { value: '7', label: 'SMP - Kelas 7' },
+            { value: '8', label: 'SMP - Kelas 8' },
+            { value: '9', label: 'SMP - Kelas 9' },
+            { value: '10', label: 'SMA - Kelas 10' },
+            { value: '11', label: 'SMA - Kelas 11' },
+            { value: '12', label: 'SMA - Kelas 12' }
+        ];
+    } else {
+        // Non-OSN: full options
+        options = [
+            { value: '1', label: '1 SD' },
+            { value: '2', label: '2 SD' },
+            { value: '3', label: '3 SD' },
+            { value: '4', label: '4 SD' },
+            { value: '5', label: '5 SD' },
+            { value: '6', label: '6 SD' },
+            { value: '7', label: '7 SMP' },
+            { value: '8', label: '8 SMP' },
+            { value: '9', label: '9 SMP' },
+            { value: '10', label: '10 SMA' },
+            { value: '11', label: '11 SMA' },
+            { value: '12', label: '12 SMA' }
+        ];
+    }
+    
+    kelasSelect.innerHTML = '<option value="">-- Pilih Kelas --</option>';
+    options.forEach(opt => {
+        const option = document.createElement('option');
+        option.value = opt.value;
+        option.textContent = opt.label;
+        kelasSelect.appendChild(option);
+    });
+}
+
 function updateMapelOptions() {
     const kelas = kelasSelect.value;
+    const jenis = jenisSelect.value;
+    
     if (!kelas) {
         mapelSelect.innerHTML = '<option value="">-- Pilih Kelas Dahulu --</option>';
         return;
     }
+    
     const kelasNum = parseInt(kelas);
     let jenjang = '';
     if (kelasNum <= 6) jenjang = 'SD';
     else if (kelasNum <= 9) jenjang = 'SMP';
     else jenjang = 'SMA';
     
-    const mapelList = mapelByJenjang[jenjang] || [];
+    // Use OSN-specific subjects if exam type is OSN
+    let mapelList = [];
+    if (jenis === 'OSN') {
+        mapelList = mapelByOSNLevel[jenjang] || [];
+    } else {
+        mapelList = mapelByJenjang[jenjang] || [];
+    }
+    
     mapelSelect.innerHTML = '';
     if (mapelList.length === 0) {
         mapelSelect.innerHTML = '<option value="">-- Mapel tidak tersedia --</option>';
@@ -237,17 +306,18 @@ btnExportPDF.addEventListener('click', () => {
     exportPDF();
 });
 
+jenisSelect.addEventListener('change', () => {
+    updateKelasOptions();
+    updateMateriOptions();
+    toggleSemesterOptions();
+});
+
 kelasSelect.addEventListener('change', () => {
     updateMapelOptions();
     toggleSemesterOptions();
 });
 
 mapelSelect.addEventListener('change', updateMateriOptions);
-
-jenisSelect.addEventListener('change', () => {
-    updateMateriOptions();
-    toggleSemesterOptions();
-});
 
 btnApplyFilter.addEventListener('click', applyFilter);
 btnResetFilter.addEventListener('click', resetFilter);
@@ -257,7 +327,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     jumlahInput.max = 30;
     jumlahInput.min = 1;
     jumlahInput.value = 3;
-    updateMapelOptions();
+    updateKelasOptions(); // Start with kelas options based on default jenis
     await loadHistory();
 });
 
@@ -304,7 +374,7 @@ function validateAllFields() {
 
 // ========== GENERATE SOAL (Metode GET yang aman) ==========
 async function generateSoal(historyParams = null) {
-    let kelas, mapel, jenis, jumlah, materi, semester, nama;
+    let kelas, mapel, jenis, jumlah, materi, semester, nama, tingkatKesulitan;
     
     if (historyParams) {
         kelas = historyParams.kelas;
@@ -314,13 +384,14 @@ async function generateSoal(historyParams = null) {
         materi = historyParams.materi || '';
         semester = historyParams.semester || '';
         nama = historyParams.nama_user;
+        tingkatKesulitan = historyParams.tingkatKesulitan || 'Sedang';
         // Set dropdown
         kelasSelect.value = kelas;
-        await updateMapelOptions(); // tunggu karena async? tidak, tapi fungsi ini sync
         updateMapelOptions(); // sync, panggil biasa
         mapelSelect.value = mapel;
         jenisSelect.value = jenis;
         jumlahInput.value = jumlah;
+        tingkatKesulitanSelect.value = tingkatKesulitan;
         if (materiSelect) materiSelect.value = materi;
         if (semesterSelect) semesterSelect.value = semester;
         namaUserInput.value = nama;
@@ -333,6 +404,7 @@ async function generateSoal(historyParams = null) {
         materi = materiSelect.value || '';
         semester = semesterSelect.value || '';
         nama = namaUserInput.value.trim();
+        tingkatKesulitan = tingkatKesulitanSelect.value || 'Sedang';
     }
 
     // Pastikan tidak ada nilai undefined atau string 'undefined'
@@ -354,7 +426,8 @@ async function generateSoal(historyParams = null) {
             jumlah: jumlah,
             materi: materi || '',
             semester: semester || '',
-            nama: nama
+            nama: nama,
+            tingkatKesulitan: tingkatKesulitan
         });
 
         const response = await fetch(APPS_SCRIPT_URL + '?' + params.toString());
@@ -370,6 +443,7 @@ async function generateSoal(historyParams = null) {
             let msg = '🤖 Soal digenerate dengan AI';
             if (materi) msg += ' - Materi: ' + materi;
             if (semester) msg += ' - Semester ' + semester;
+            msg += ` - Tingkat: ${tingkatKesulitan}`;
             showNotification(msg, 'success');
             soalSection.scrollIntoView({ behavior: 'smooth' });
         } else {
@@ -450,27 +524,12 @@ function cleanLatex(text) {
     return text;
 }
 
-// Tambahkan fungsi fixText setelah cleanLatex
-function fixText(text) {
-    if (!text) return text;
-    // Jika teks mengandung delimiter LaTeX, biarkan (jangan ubah backslash)
-    if (text.includes('$') || text.includes('\\(') || text.includes('\\)')) {
-        return text;
-    }
-    // Ganti semua backslash dengan spasi
-    text = text.replace(/\\/g, ' ');
-    // Hapus spasi berlebih
-    text = text.replace(/\s+/g, ' ').trim();
-    return text;
-}
-
 function tampilkanSoal() {
     let html = '';
     for (let i = 0; i < currentSoal.length; i++) {
         const soal = currentSoal[i];
         const pilihan = soal.pilihan || ['A. Pilihan A', 'B. Pilihan B', 'C. Pilihan C', 'D. Pilihan D'];
-        let pertanyaan = cleanLatex(soal.pertanyaan || 'Pertanyaan tidak tersedia');
-        pertanyaan = fixText(pertanyaan); 
+        let pertanyaan = cleanLatex(soal.pertanyaan || 'Pertanyaan tidak tersedia'); 
         
         html += '<div class="soal-item" id="soal-' + i + '">';
         html += '<div class="soal-nomor">Soal ' + (i+1) + '/' + totalSoal + '</div>';
@@ -481,7 +540,6 @@ function tampilkanSoal() {
             const opt = String.fromCharCode(65 + j);
             const pilId = `pil-${i}-${opt}`;
             let teks = cleanLatex(pilihan[j]);
-            teks = fixText(teks);
             html += `<div class="pilihan-item">`;
             html += `<input type="radio" name="soal-${i}" id="${pilId}" value="${opt}" onchange="pilihJawaban(${i}, '${opt}')">`;
             html += `<label for="${pilId}" class="math-content">${teks}</label>`;
@@ -539,7 +597,6 @@ function cekSemuaJawaban() {
         const user = jawabanUser[i];
         const benar = soal.jawaban_benar || 'A';
         let solusi = cleanLatex(soal.solusi || 'Solusi tidak tersedia.');
-        solusi = fixText(solusi);
         let feedback, cls;
         
         if (!user) {
@@ -570,6 +627,37 @@ async function selesaiLatihan() {
     alert(`✅ Latihan selesai!\n\nBenar: ${skor}\nSalah: ${salah}\nTotal Soal: ${totalSoal}\n\nSkor akan disimpan.`);
     
     const nama = namaUserInput.value.trim() || 'Anonim';
+    
+    // 🔹 Local Storage Backup
+    const hasil = {
+        nama_user: nama,
+        skor: skor,
+        total_soal: totalSoal,
+        kelas: kelasSelect.value,
+        mapel: mapelSelect.value,
+        jenis: jenisSelect.value,
+        jumlah: jumlahInput.value,
+        tingkatKesulitan: tingkatKesulitanSelect.value || 'Sedang',
+        materi: materiSelect.value || '',
+        semester: semesterSelect.value || '',
+        soal_json: currentSoal,
+        jawaban_user: jawabanUser,
+        waktu_pengerjaan: timerDisplay.innerText,
+        tanggal: new Date().toISOString()
+    };
+    
+    // Simpan ke localStorage
+    let hasilBackup = [];
+    try {
+        const existing = localStorage.getItem('bankSoalBackup');
+        if (existing) hasilBackup = JSON.parse(existing);
+    } catch (e) {
+        hasilBackup = [];
+    }
+    hasilBackup.push(hasil);
+    localStorage.setItem('bankSoalBackup', JSON.stringify(hasilBackup));
+    showNotification('✅ Backup lokal tersimpan', 'success');
+    
     const params = new URLSearchParams({
         action: 'simpanLog',
         nama_user: nama,
@@ -584,18 +672,18 @@ async function selesaiLatihan() {
         soal_json: JSON.stringify(currentSoal)
     });
     
-    showNotification('Menyimpan...', 'info');
+    showNotification('Menyimpan ke Google Sheets...', 'info');
     try {
         const response = await fetch(APPS_SCRIPT_URL + '?' + params.toString());
         const data = await response.json();
         if (data.success) {
-            showNotification('Skor tersimpan!', 'success');
+            showNotification('Skor tersimpan ke database!', 'success');
             await loadHistory(); // refresh history
         } else {
-            showNotification('Gagal menyimpan', 'error');
+            showNotification('Gagal sync ke Sheets (tapi backup lokal sudah tersimpan)', 'warning');
         }
     } catch (e) {
-        showNotification('Gagal sync', 'error');
+        showNotification('Gagal sync (backup lokal tersimpan)', 'warning');
     } finally {
         clearInterval(timerInterval);
     }
@@ -630,6 +718,16 @@ function exportPDF() {
     }
     doc.save('soal-'+Date.now()+'.pdf');
     showNotification('PDF siap', 'success');
+}
+
+// ========== FUNGSI UTILITY ==========
+function shuffleArray(array) {
+    const arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
 }
 
 // ========== RIWAYAT ==========
@@ -718,7 +816,12 @@ window.redoAttempt = function(index) {
     if (!item) return;
     if (item.soal_json) {
         try {
-            currentSoal = JSON.parse(item.soal_json);
+            let soalBaru = JSON.parse(item.soal_json);
+            
+            // 🔹 QUESTION RANDOMIZATION - Acak urutan soal saat mengerjakan ulang
+            soalBaru = shuffleArray(soalBaru);
+            
+            currentSoal = soalBaru;
             totalSoal = currentSoal.length;
             jawabanUser = new Array(totalSoal).fill(null);
             tampilkanSoal();
@@ -732,7 +835,7 @@ window.redoAttempt = function(index) {
             jumlahInput.value = item.jumlah;
             if (item.materi && materiSelect) materiSelect.value = item.materi;
             if (item.semester && semesterSelect) semesterSelect.value = item.semester;
-            showNotification('Soal dimuat dari riwayat', 'info');
+            showNotification('✅ Soal dimuat & diacak! Kerjakan dengan urutan berbeda.', 'info');
         } catch (e) {
             showNotification('Gagal memuat soal', 'error');
         }

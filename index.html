@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
     <title>AI Learning App - Kurikulum Merdeka</title>
     
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+    
     <!-- External CSS -->
     <link rel="stylesheet" href="style.css">
     
@@ -34,49 +37,74 @@
 </head>
 <body>
     <div class="container">
-        <h1>Ruang Belajar AI - Kurikulum Merdeka</h1>
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>🧠 Ruang Belajar AI</h1>
+                <p class="subtitle">Belajar Interaktif dengan Kurikulum Merdeka</p>
+            </div>
+        </header>
         
         <!-- Form Filter Soal -->
         <section class="filter-section">
-            <h2>📋 Pilih Latihan</h2>
+            <div class="section-header">
+                <h2>📋 Mulai Latihan</h2>
+                <p class="section-desc">Pilih jenis ujian, kelas, dan mata pelajaran untuk memulai</p>
+            </div>
             <div class="filter-grid">
-                <div class="form-group">
-                    <label>Kelas</label>
-                    <select id="kelas" required>
-                        <option value="">-- Pilih Kelas --</option>
-                        <option value="1">1 SD</option>
-                        <option value="2">2 SD</option>
-                        <option value="3">3 SD</option>
-                        <option value="4">4 SD</option>
-                        <option value="5">5 SD</option>
-                        <option value="6">6 SD</option>
-                        <option value="7">7 SMP</option>
-                        <option value="8">8 SMP</option>
-                        <option value="9">9 SMP</option>
-                        <option value="10">10 SMA</option>
-                        <option value="11">11 SMA</option>
-                        <option value="12">12 SMA</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Mata Pelajaran</label>
-                    <select id="mapel"></select>
-                </div>
+                <!-- Jenis Ujian FIRST -->
                 <div class="form-group">
                     <label>Jenis Ujian</label>
-                    <select id="jenis">
+                    <select id="jenis" required>
+                        <option value="">-- Pilih Jenis Ujian --</option>
                         <option value="Harian">📝 Ulangan Harian</option>
                         <option value="UAS">📚 UAS</option>
                         <option value="OSN">🏆 OSN</option>
                         <option value="TKA">🎯 TKA/UTBK</option>
                     </select>
                 </div>
+                
                 <div class="form-group">
-                    <label>Jumlah Soal (1-30)</label>
+                    <label>Kelas</label>
+                    <select id="kelas" required>
+                        <option value="">-- Pilih Kelas --</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                        <option value="10">10</option>
+                        <option value="11">11</option>
+                        <option value="12">12</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Mata Pelajaran</label>
+                    <select id="mapel"></select>
+                </div>
+                
+                <!-- Difficulty Level Selector -->
+                <div class="form-group">
+                    <label>Tingkat Kesulitan</label>
+                    <select id="tingkatKesulitan">
+                        <option value="Mudah">🟢 Mudah</option>
+                        <option value="Sedang" selected>🟡 Sedang</option>
+                        <option value="Sulit">🔴 Sulit</option>
+                        <option value="Sangat Sulit">⚫ Sangat Sulit</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Jumlah Soal</label>
                     <input type="number" id="jumlah" min="1" max="30" value="3">
                 </div>
                 
-                <!-- Materi (dinamis) - muncul untuk Ulangan Harian -->
+                <!-- Materi (dinamis) -->
                 <div class="form-group" id="materi-group" style="display: none;">
                     <label>Materi</label>
                     <select id="materi">
@@ -84,7 +112,7 @@
                     </select>
                 </div>
                 
-                <!-- Semester (untuk UAS) -->
+                <!-- Semester -->
                 <div class="form-group" id="semester-group" style="display: none;">
                     <label>Semester</label>
                     <select id="semester">
@@ -95,10 +123,10 @@
                 
                 <div class="form-group">
                     <label>Nama Kamu</label>
-                    <input type="text" id="namaUser" placeholder="Masukkan nama" required>
+                    <input type="text" id="namaUser" placeholder="Masukkan nama lengkap" required>
                 </div>
-                <button id="btnGenerate">🎯 Mulai Latihan</button>
             </div>
+            <button id="btnGenerate" class="btn-primary">🚀 Mulai Latihan</button>
         </section>
 
         <!-- Area Soal -->
@@ -106,18 +134,21 @@
             <div class="soal-header">
                 <h2>📝 Soal Latihan</h2>
                 <div class="timer">⏱️ <span id="timerDisplay">00:00</span></div>
-                <div class="action-buttons">
-                    <button id="btnExportPDF">📥 Export PDF</button>
-                    <button id="btnCekSemua">✅ Cek Jawaban</button>
-                    <button id="btnSelesai">🏁 Selesai & Simpan</button>
-                </div>
             </div>
             <div id="soalContainer"></div>
+            <div class="action-buttons">
+                <button id="btnCekSemua">✅ Cek Jawaban</button>
+                <button id="btnExportPDF">📥 Export PDF</button>
+                <button id="btnSelesai">🏁 Selesai & Simpan</button>
+            </div>
         </section>
 
         <!-- Riwayat Pengerjaan (History) -->
         <section class="history-section">
-            <h2>📚 Riwayat Pengerjaan</h2>
+            <div class="section-header">
+                <h2>📚 Riwayat Pengerjaan</h2>
+                <p class="section-desc">Lihat hasil latihan sebelumnya dan coba lagi</p>
+            </div>
             
             <!-- Filter Riwayat -->
             <div class="history-filters">
@@ -132,8 +163,10 @@
                             <option value="">Semua Kelas</option>
                         </select>
                     </div>
-                    <button id="btnApplyFilter" class="btn-filter">🔍 Terapkan Filter</button>
-                    <button id="btnResetFilter" class="btn-filter">🔄 Reset</button>
+                    <div class="filter-buttons">
+                        <button id="btnApplyFilter" class="btn-secondary">🔍 Terapkan</button>
+                        <button id="btnResetFilter" class="btn-secondary">🔄 Reset</button>
+                    </div>
                 </div>
             </div>
             
@@ -144,7 +177,7 @@
     </div>
 
     <footer>
-        <p>AI Learning App &copy; 2026 - Belajar dengan Kurikulum Merdeka</p>
+        <p>AI Learning App &copy; 2026 | Belajar dengan Kurikulum Merdeka</p>
     </footer>
 
     <script src="script.js"></script>
