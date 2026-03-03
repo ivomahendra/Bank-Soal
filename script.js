@@ -1,5 +1,5 @@
 // ============================================
-// SCRIPT.JS - AI LEARNING APP (GROQ VERSION)
+// SCRIPT.JS - AI LEARNING APP (VERSI LENGKAP)
 // ============================================
 
 // KONFIGURASI - GANTI DENGAN URL APPS SCRIPT ANDA!
@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (jumlahInput) {
         jumlahInput.max = 30;
         jumlahInput.min = 1;
-        jumlahInput.value = 5;
+        jumlahInput.value = 3;
     }
 });
 
@@ -141,7 +141,111 @@ function handleError(data) {
 }
 
 /**
- * Tampilkan soal ke HTML
+ * FUNGSI CLEAN LATEX - PERBAIKAN UTAMA UNTUK RUMUS MATEMATIKA
+ */
+function cleanLatex(text) {
+    if (!text) return text;
+    
+    // Simpan original untuk debug
+    let original = text;
+    
+    // ===== PERBAIKAN TIPOGRAFI =====
+    const typos = [
+        ['memilikiikakar', 'memiliki akar'],
+        ['makanilai', 'maka nilai'],
+        ['bilangangrafen', 'bilangan real'],
+        ['positi f', 'positif'],
+        ['tidaksamadenganom', 'tidak sama dengan nol'],
+        ['nilainiminum', 'nilai minimum'],
+        ['persamaankuadrat', 'persamaan kuadrat'],
+        ['berikutin', 'berikut ini'],
+        ['denganom', 'dengan nol'],
+        ['grafikfungsi', 'grafik fungsi'],
+        ['tentukanlah', 'tentukan'],
+        ['berapakah', 'berapa'],
+    ];
+    
+    for (let i = 0; i < typos.length; i++) {
+        text = text.replace(new RegExp(typos[i][0], 'g'), typos[i][1]);
+    }
+    
+    // ===== PERBAIKAN NOTASI PANGKAT =====
+    
+    // Kasus: x^{\wedge}2 → x^2
+    text = text.replace(/([a-zA-Z0-9])\s*\{\s*\\?\\?\\?wedge\s*(\d+)\s*\}/g, '$1^$2');
+    text = text.replace(/([a-zA-Z0-9])\s*\\?\^?\s*\{\s*\\?\\?\\?wedge\s*(\d+)\s*\}/g, '$1^$2');
+    
+    // Kasus: x^{\wedge}2 (tanpa kurung tutup)
+    text = text.replace(/([a-zA-Z0-9])\s*\{\s*\\?\\?\\?wedge\s*(\d+)/g, '$1^$2');
+    
+    // Kasus: x^2 (sudah benar) - pastikan tidak ada backslash sebelum ^
+    text = text.replace(/\\\^(\d+)/g, '^$1');
+    text = text.replace(/\\\\\^(\d+)/g, '^$1');
+    
+    // Kasus: x^{2}
+    text = text.replace(/([a-zA-Z0-9])\s*\^\s*\{\s*(\d+)\s*\}/g, '$1^$2');
+    
+    // ===== PERBAIKAN NOTASI SUBSCRIPT =====
+    text = text.replace(/([a-zA-Z0-9])\s*\\?_(\d+)/g, '$1_$2');
+    text = text.replace(/([a-zA-Z0-9])\s*\{\s*_(\d+)\s*\}/g, '$1_$2');
+    text = text.replace(/\\_(\d+)/g, '_$1');
+    
+    // ===== PERBAIKAN PECAHAN =====
+    text = text.replace(/\\?\\?\\?frac/g, '\\frac');
+    text = text.replace(/frac\{/g, '\\frac{');
+    text = text.replace(/\\frac\s*{([^}]*)}\s*{([^}]*)}/g, '\\frac{$1}{$2}');
+    
+    // ===== PERBAIKAN \cdot =====
+    text = text.replace(/\\?\\?\\?cdot\s+cdot/g, '\\cdot');
+    text = text.replace(/\\?\\?\\?cdot/g, '\\cdot');
+    
+    // ===== PERBAIKAN BACKSLASH GANDA =====
+    text = text.replace(/\\\\/g, '\\');
+    
+    // ===== PERBAIKAN KURUNG KURAWAL =====
+    text = text.replace(/\{\s+/g, '{');
+    text = text.replace(/\s+\}/g, '}');
+    
+    // ===== PERBAIKAN FUNGSI TRIGONOMETRI =====
+    text = text.replace(/\\?\\?\\?sin/g, '\\sin');
+    text = text.replace(/\\?\\?\\?cos/g, '\\cos');
+    text = text.replace(/\\?\\?\\?tan/g, '\\tan');
+    text = text.replace(/\\?\\?\\?log/g, '\\log');
+    text = text.replace(/\\?\\?\\?ln/g, '\\ln');
+    text = text.replace(/\\?\\?\\?sqrt/g, '\\sqrt');
+    
+    // ===== PERBAIKAN SPASI DI SEKITAR OPERATOR =====
+    text = text.replace(/\s*\+\s*/g, ' + ');
+    text = text.replace(/\s*\-\s*/g, ' - ');
+    text = text.replace(/\s*\=\s*/g, ' = ');
+    text = text.replace(/\s*\*\s*/g, ' \\cdot ');
+    
+    // ===== BUNGKUS DENGAN $ JIKA PERLU =====
+    const hasLatex = /\\[a-zA-Z]+|[\^_]|\{[0-9]+\}|\\frac|\\cdot|\\sqrt/.test(text);
+    if (hasLatex && !text.includes('$') && !text.includes('\\(') && !text.includes('\\)')) {
+        text = '$' + text + '$';
+    }
+    
+    // ===== PERBAIKAN KURUNG YANG TIDAK SEIMBANG =====
+    let openCount = (text.match(/\{/g) || []).length;
+    let closeCount = (text.match(/\}/g) || []).length;
+    
+    if (openCount > closeCount) {
+        for (let i = 0; i < openCount - closeCount; i++) {
+            text += '}';
+        }
+    }
+    
+    // Debug log
+    if (original !== text) {
+        console.log('🧹 Cleaned LaTeX:', { before: original, after: text });
+    }
+    
+    return text;
+}
+
+/**
+ * Tampilkan soal ke HTML dengan dukungan matematika
  */
 function tampilkanSoal() {
     let html = '';
@@ -150,26 +254,49 @@ function tampilkanSoal() {
         const soal = currentSoal[i];
         const pilihan = soal.pilihan || ['A. Pilihan A', 'B. Pilihan B', 'C. Pilihan C', 'D. Pilihan D'];
         
+        // Bersihkan teks pertanyaan
+        let pertanyaan = soal.pertanyaan || 'Pertanyaan tidak tersedia';
+        pertanyaan = cleanLatex(pertanyaan);
+        
         html += '<div class="soal-item" id="soal-' + i + '" data-idx="' + i + '">';
         html += '<div class="soal-nomor">Soal ' + (i + 1) + ' / ' + totalSoal + '</div>';
-        html += '<p class="soal-pertanyaan">' + (soal.pertanyaan || 'Pertanyaan tidak tersedia') + '</p>';
+        
+        // Gunakan class math-content untuk MathJax
+        html += '<div class="soal-pertanyaan math-content">' + pertanyaan + '</div>';
+        
         html += '<div class="pilihan-container">';
         
         for (let j = 0; j < pilihan.length; j++) {
-            const option = String.fromCharCode(65 + j); // A, B, C, D
+            const option = String.fromCharCode(65 + j);
             const pilId = 'pil-' + i + '-' + option;
+            let teksPilihan = cleanLatex(pilihan[j]);
+            
             html += '<div class="pilihan-item">';
             html += '<input type="radio" name="soal-' + i + '" id="' + pilId + '" value="' + option + '" onchange="pilihJawaban(' + i + ', \'' + option + '\')">';
-            html += '<label for="' + pilId + '">' + pilihan[j] + '</label>';
+            html += '<label for="' + pilId + '" class="math-content">' + teksPilihan + '</label>';
             html += '</div>';
         }
         
         html += '</div>';
+        
+        // Area jawaban (akan diisi saat cek jawaban)
         html += '<div class="jawaban-section" id="jawaban-' + i + '" style="display: none;"></div>';
         html += '</div>';
     }
     
     soalContainer.innerHTML = html;
+    
+    // Render ulang matematika dengan MathJax
+    if (window.MathJax) {
+        MathJax.typesetPromise()
+            .then(function() {
+                console.log('MathJax rendering selesai');
+            })
+            .catch(function(err) {
+                console.log('MathJax error:', err);
+            });
+    }
+    
     updateProgress();
 }
 
@@ -254,13 +381,16 @@ function cekSemuaJawaban() {
         var benar = soal.jawaban_benar || 'A';
         var solusi = soal.solusi || 'Solusi tidak tersedia.';
         
+        // Bersihkan teks solusi
+        solusi = cleanLatex(solusi);
+        
         var feedback = '';
         var statusClass = '';
         
         if (!userJawab) {
             semuaTerjawab = false;
             feedback = '<div class="feedback-icon">⏳</div>' +
-                '<div class="feedback-content">' +
+                '<div class="feedback-content math-content">' +
                 '<span class="belum-dijawab">Belum dijawab</span><br>' +
                 '<strong>Jawaban benar:</strong> ' + benar + '<br>' +
                 '<strong>Pembahasan:</strong> ' + solusi +
@@ -268,7 +398,7 @@ function cekSemuaJawaban() {
             statusClass = 'feedback-belum';
         } else if (userJawab === benar) {
             feedback = '<div class="feedback-icon">✅</div>' +
-                '<div class="feedback-content">' +
+                '<div class="feedback-content math-content">' +
                 '<span class="benar">Jawaban Anda benar!</span><br>' +
                 '<strong>Pembahasan:</strong> ' + solusi +
                 '</div>';
@@ -276,7 +406,7 @@ function cekSemuaJawaban() {
             skor++;
         } else {
             feedback = '<div class="feedback-icon">❌</div>' +
-                '<div class="feedback-content">' +
+                '<div class="feedback-content math-content">' +
                 '<span class="salah">Jawaban Anda salah</span><br>' +
                 '<strong>Jawaban Anda:</strong> ' + userJawab + '<br>' +
                 '<strong>Jawaban benar:</strong> ' + benar + '<br>' +
@@ -290,6 +420,11 @@ function cekSemuaJawaban() {
             jawabanDiv.className = 'jawaban-section ' + statusClass;
             jawabanDiv.style.display = 'flex';
         }
+    }
+    
+    // Render ulang matematika
+    if (window.MathJax) {
+        MathJax.typesetPromise();
     }
     
     if (semuaTerjawab) {
@@ -380,7 +515,14 @@ function exportPDF() {
         doc.setFontSize(12);
         doc.setFont(undefined, 'bold');
         
-        var soalText = (i + 1) + '. ' + (soal.pertanyaan || 'Pertanyaan tidak tersedia');
+        // Untuk PDF, kita hilangkan delimiter LaTeX
+        var pertanyaan = (soal.pertanyaan || 'Pertanyaan tidak tersedia')
+            .replace(/\$/g, '')
+            .replace(/\\frac/g, '/')
+            .replace(/\^/g, '^')
+            .replace(/\\cdot/g, '·');
+        
+        var soalText = (i + 1) + '. ' + pertanyaan;
         var splitPertanyaan = doc.splitTextToSize(soalText, 170);
         doc.text(splitPertanyaan, 20, y);
         y += (splitPertanyaan.length * lineHeight);
@@ -389,7 +531,8 @@ function exportPDF() {
         
         var pilihan = soal.pilihan || [];
         for (var j = 0; j < pilihan.length; j++) {
-            var splitPil = doc.splitTextToSize('   ' + pilihan[j], 165);
+            var teksPil = pilihan[j].replace(/\$/g, '');
+            var splitPil = doc.splitTextToSize('   ' + teksPil, 165);
             doc.text(splitPil, 25, y);
             y += (splitPil.length * lineHeight);
         }
