@@ -2,14 +2,14 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Learning App - Matematika</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>AI Learning App - Kurikulum Merdeka</title>
+    
+    <!-- External CSS -->
+    <link rel="stylesheet" href="style.css">
     
     <!-- Library untuk PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    
-    <!-- Library untuk Chart -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <!-- Library untuk rendering matematika (MathJax) -->
     <script>
@@ -27,519 +27,14 @@
             },
             loader: {
                 load: ['[tex]/noerrors']
-            },
-            startup: {
-                pageReady: () => {
-                    console.log('MathJax siap!');
-                }
             }
         };
     </script>
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" id="MathJax-script"></script>
-    
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        }
-
-        h1 {
-            color: #2c3e50;
-            margin-bottom: 30px;
-            text-align: center;
-            font-size: 2.5em;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        h1::before {
-            content: '🧮';
-            font-size: 1.2em;
-        }
-
-        h2 {
-            color: #34495e;
-            margin-bottom: 20px;
-            font-size: 1.5em;
-        }
-
-        .filter-section {
-            background: #f8fafc;
-            padding: 25px;
-            border-radius: 15px;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        .filter-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .form-group label {
-            font-weight: 600;
-            color: #2c3e50;
-            font-size: 14px;
-        }
-
-        .form-group input,
-        .form-group select {
-            padding: 12px;
-            border: 2px solid #e2e8f0;
-            border-radius: 10px;
-            font-size: 14px;
-            transition: 0.3s;
-            background: white;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus {
-            border-color: #667eea;
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        button {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 14px 28px;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        button:hover {
-            background: #5a67d8;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-        }
-
-        button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        #btnGenerate {
-            grid-column: 1 / -1;
-            background: #48bb78;
-            font-size: 18px;
-        }
-
-        #btnGenerate:hover {
-            background: #38a169;
-        }
-
-        .soal-section {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            border: 1px solid #e2e8f0;
-        }
-
-        .soal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #edf2f7;
-        }
-
-        .timer {
-            background: #2d3748;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 30px;
-            font-family: 'Courier New', monospace;
-            font-size: 1.3rem;
-            letter-spacing: 2px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        #btnExportPDF {
-            background: #ed8936;
-        }
-
-        #btnExportPDF:hover {
-            background: #dd6b20;
-        }
-
-        #btnCekSemua {
-            background: #4299e1;
-        }
-
-        #btnCekSemua:hover {
-            background: #3182ce;
-        }
-
-        #btnSelesai {
-            background: #9f7aea;
-        }
-
-        #btnSelesai:hover {
-            background: #805ad5;
-        }
-
-        /* Styling untuk soal matematika */
-        .soal-item {
-            background: #f7fafc;
-            border-radius: 12px;
-            padding: 20px;
-            margin: 20px 0;
-            border-left: 5px solid #4299e1;
-            transition: 0.3s;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-
-        .soal-item.sudah-dijawab {
-            border-left-color: #48bb78;
-            background: #f0fff4;
-        }
-
-        .soal-nomor {
-            font-size: 14px;
-            color: #718096;
-            margin-bottom: 10px;
-            font-weight: 600;
-        }
-
-        .soal-pertanyaan {
-            background: #ffffff;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            border: 1px solid #e2e8f0;
-            font-size: 16px;
-            line-height: 1.8;
-        }
-
-        /* Styling untuk konten matematika */
-        .math-content {
-            font-family: 'Times New Roman', serif;
-        }
-
-        .math-content mjx-container {
-            font-size: 1.2em;
-            margin: 0 2px;
-        }
-
-        .math-content mjx-container[display="true"] {
-            display: block;
-            margin: 10px 0;
-            padding: 5px 0;
-            overflow-x: auto;
-            overflow-y: hidden;
-        }
-
-        .pilihan-container {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin: 15px 0;
-        }
-
-        .pilihan-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 16px;
-            background: white;
-            border: 2px solid #e2e8f0;
-            border-radius: 10px;
-            transition: 0.2s;
-            cursor: pointer;
-        }
-
-        .pilihan-item:hover {
-            background: #ebf8ff;
-            border-color: #4299e1;
-        }
-
-        .pilihan-item input[type="radio"] {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-            accent-color: #4299e1;
-        }
-
-        .pilihan-item label {
-            cursor: pointer;
-            flex: 1;
-            font-size: 15px;
-            color: #2d3748;
-        }
-
-        .jawaban-section {
-            margin-top: 15px;
-            padding: 20px;
-            border-radius: 10px;
-            display: flex;
-            gap: 15px;
-            align-items: flex-start;
-            animation: slideDown 0.3s ease;
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .feedback-icon {
-            font-size: 28px;
-            min-width: 50px;
-            text-align: center;
-        }
-
-        .feedback-content {
-            flex: 1;
-            line-height: 1.8;
-        }
-
-        .feedback-content mjx-container {
-            font-size: 1.1em;
-        }
-
-        .feedback-benar {
-            background: #c6f6d5;
-            border: 2px solid #9ae6b4;
-        }
-
-        .feedback-salah {
-            background: #fed7d7;
-            border: 2px solid #fc8181;
-        }
-
-        .feedback-belum {
-            background: #feebc8;
-            border: 2px solid #fbd38d;
-        }
-
-        .benar {
-            color: #276749;
-            font-weight: bold;
-        }
-
-        .salah {
-            color: #c53030;
-            font-weight: bold;
-        }
-
-        .belum-dijawab {
-            color: #97550e;
-            font-weight: bold;
-        }
-
-        .progress-section {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        #progressChart {
-            max-height: 300px;
-            margin-top: 20px;
-        }
-
-        .progress-bar-container {
-            margin: 15px 0;
-            padding: 15px;
-            background: #f7fafc;
-            border-radius: 10px;
-        }
-
-        .progress-info {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            color: #4a5568;
-            font-weight: 500;
-        }
-
-        .progress-bar-bg {
-            width: 100%;
-            height: 25px;
-            background: #edf2f7;
-            border-radius: 15px;
-            overflow: hidden;
-        }
-
-        .progress-bar-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #4299e1, #667eea);
-            border-radius: 15px;
-            transition: width 0.5s ease;
-            color: white;
-            font-size: 13px;
-            line-height: 25px;
-            text-align: center;
-            font-weight: 600;
-            min-width: 40px;
-        }
-
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 25px;
-            border-radius: 10px;
-            color: white;
-            font-weight: 500;
-            z-index: 9999;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            animation: slideInRight 0.3s ease;
-            max-width: 350px;
-        }
-
-        @keyframes slideInRight {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        @keyframes slideOutRight {
-            from {
-                transform: translateX(0);
-                opacity: 1;
-            }
-            to {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-        }
-
-        .notification-success { background: #48bb78; }
-        .notification-error { background: #f56565; }
-        .notification-warning { background: #ed8936; }
-        .notification-info { background: #4299e1; }
-
-        .spinner {
-            display: inline-block;
-            width: 18px;
-            height: 18px;
-            border: 3px solid rgba(255,255,255,.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 0.8s linear infinite;
-            margin-right: 8px;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        footer {
-            text-align: center;
-            margin-top: 30px;
-            color: white;
-            opacity: 0.8;
-            font-size: 14px;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 15px;
-            }
-            
-            .filter-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .soal-header {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .action-buttons {
-                flex-direction: column;
-            }
-            
-            button {
-                width: 100%;
-            }
-        }
-
-        /* Styling untuk scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #555;
-        }
-    </style>
 </head>
 <body>
     <div class="container">
-        <h1>Ruang Belajar Vera-Vika (AI)</h1>
+        <h1>Ruang Belajar AI - Kurikulum Merdeka</h1>
         
         <!-- Form Filter Soal -->
         <section class="filter-section">
@@ -565,26 +60,39 @@
                 </div>
                 <div class="form-group">
                     <label>Mata Pelajaran</label>
-                    <select id="mapel">
-                        <option value="Matematika">Matematika</option>
-                        <option value="Fisika">Fisika</option>
-                        <option value="Kimia">Kimia</option>
-                        <option value="Biologi">Biologi</option>
-                    </select>
+                    <select id="mapel"></select>
                 </div>
                 <div class="form-group">
                     <label>Jenis Ujian</label>
                     <select id="jenis">
-                        <option value="Harian">📝 Harian</option>
+                        <option value="Harian">📝 Ulangan Harian</option>
                         <option value="UAS">📚 UAS</option>
                         <option value="OSN">🏆 OSN</option>
-                        <option value="TKA">🎯 TKA</option>
+                        <option value="TKA">🎯 TKA/UTBK</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label>Jumlah Soal (1-30)</label>
                     <input type="number" id="jumlah" min="1" max="30" value="3">
                 </div>
+                
+                <!-- Materi (dinamis) - muncul untuk Ulangan Harian -->
+                <div class="form-group" id="materi-group" style="display: none;">
+                    <label>Materi</label>
+                    <select id="materi">
+                        <option value="">-- Pilih Materi --</option>
+                    </select>
+                </div>
+                
+                <!-- Semester (untuk UAS) -->
+                <div class="form-group" id="semester-group" style="display: none;">
+                    <label>Semester</label>
+                    <select id="semester">
+                        <option value="1">Semester 1</option>
+                        <option value="2">Semester 2</option>
+                    </select>
+                </div>
+                
                 <div class="form-group">
                     <label>Nama Kamu</label>
                     <input type="text" id="namaUser" placeholder="Masukkan nama" required>
@@ -607,15 +115,36 @@
             <div id="soalContainer"></div>
         </section>
 
-        <!-- Progress Tracker -->
-        <section class="progress-section">
-            <h2>📈 Progress Belajar</h2>
-            <canvas id="progressChart"></canvas>
+        <!-- Riwayat Pengerjaan (History) -->
+        <section class="history-section">
+            <h2>📚 Riwayat Pengerjaan</h2>
+            
+            <!-- Filter Riwayat -->
+            <div class="history-filters">
+                <div class="filter-row">
+                    <div class="form-group">
+                        <label>Filter Nama</label>
+                        <input type="text" id="filterNama" placeholder="Cari nama..." value="">
+                    </div>
+                    <div class="form-group">
+                        <label>Filter Kelas</label>
+                        <select id="filterKelas">
+                            <option value="">Semua Kelas</option>
+                        </select>
+                    </div>
+                    <button id="btnApplyFilter" class="btn-filter">🔍 Terapkan Filter</button>
+                    <button id="btnResetFilter" class="btn-filter">🔄 Reset</button>
+                </div>
+            </div>
+            
+            <div id="historyList" class="history-list">
+                <p class="loading">Memuat riwayat...</p>
+            </div>
         </section>
     </div>
 
     <footer>
-        <p>AI Learning App &copy; 2026 - Belajar Matematika Lebih Cerdas dengan AI</p>
+        <p>AI Learning App &copy; 2026 - Belajar dengan Kurikulum Merdeka</p>
     </footer>
 
     <script src="script.js"></script>
