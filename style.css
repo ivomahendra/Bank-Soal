@@ -347,6 +347,37 @@ button:disabled {
     color: var(--dark);
 }
 
+/* Tambahkan pada .soal-pertanyaan */
+.soal-pertanyaan {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+    max-width: 100%;
+}
+
+/* Pastikan label pilihan juga tidak overflow */
+.pilihan-item label {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+}
+
+/* Pastikan teks soal tidak overflow */
+.soal-pertanyaan {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+    max-width: 100%;
+    line-height: 1.5;
+}
+
+/* Label pilihan juga */
+.pilihan-item label {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+}
+
 /* ========== FEEDBACK ========== */
 .jawaban-section {
     background: var(--gray-light);
@@ -462,6 +493,41 @@ button:disabled {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 16px;
+}
+
+/* Tombol Ke Halaman Utama */
+#btnHome {
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    color: white;
+    padding: 12px 20px;
+    font-size: 0.95rem;
+    flex: 1;
+}
+
+#btnHome:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.2);
+}
+
+/* Tombol Kerjakan Ulang */
+#btnRedo {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    padding: 12px 20px;
+    font-size: 0.95rem;
+    flex: 1;
+}
+
+#btnRedo:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+}
+
+/* Atur tata letak tombol saat hanya dua yang tampil */
+.action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
 }
 
 .history-item {

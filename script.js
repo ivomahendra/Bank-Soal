@@ -1,10 +1,10 @@
 // ============================================
 // SCRIPT.JS - AI LEARNING APP (KURIKULUM MERDEKA)
-// Versi Stabil - Perbaikan Riwayat, Hapus DB, Multi API Key
+// Versi Stabil - Perbaikan Tampilan, Tombol Pasca-Latihan, CleanLatex
 // ============================================
 
 // KONFIGURASI - GANTI DENGAN URL APPS SCRIPT ANDA!
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwgPI77eCMyYehimbSfthRw-Yu1L8nozXbUXwlM-82cBCKfxELtN0tPdS8r8j3sQqFZZw/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzUdIyXf5czqwnZjGK1Ech1lWtx-7QyR90FJE3GqpBgb3_MyPLO3a3p5mMX-xYPLNZBiA/exec';
 
 // ========== DATA KURIKULUM MERDEKA ==========
 const mapelByJenjang = {
@@ -139,6 +139,8 @@ const soalContainer = document.getElementById('soalContainer');
 const btnCekSemua = document.getElementById('btnCekSemua');
 const btnSelesai = document.getElementById('btnSelesai');
 const btnExportPDF = document.getElementById('btnExportPDF');
+const btnHome = document.getElementById('btnHome');
+const btnRedo = document.getElementById('btnRedo');
 const timerDisplay = document.getElementById('timerDisplay');
 const namaUserInput = document.getElementById('namaUser');
 const kelasSelect = document.getElementById('kelas');
@@ -301,6 +303,38 @@ btnExportPDF.addEventListener('click', () => {
     exportPDF();
 });
 
+btnHome.addEventListener('click', () => {
+    // Kembali ke halaman utama (filter section)
+    soalSection.style.display = 'none';
+    document.querySelector('.filter-section').scrollIntoView({ behavior: 'smooth' });
+    // Tampilkan kembali tombol asli untuk sesi berikutnya
+    btnCekSemua.style.display = 'none';
+    btnExportPDF.style.display = 'inline-flex';
+    btnSelesai.style.display = 'inline-flex';
+    btnHome.style.display = 'none';
+    btnRedo.style.display = 'none';
+});
+
+btnRedo.addEventListener('click', () => {
+    // Generate ulang dengan parameter yang sama
+    generateSoal({
+        kelas: kelasSelect.value,
+        mapel: mapelSelect.value,
+        jenis: jenisSelect.value,
+        jumlah: jumlahInput.value,
+        materi: materiSelect.value || '',
+        semester: semesterSelect.value || '',
+        nama_user: namaUserInput.value.trim(),
+        tingkatKesulitan: tingkatKesulitanSelect.value || 'Sedang'
+    });
+    // Sembunyikan tombol baru, tampilkan tombol lama
+    btnCekSemua.style.display = 'none';
+    btnExportPDF.style.display = 'inline-flex';
+    btnSelesai.style.display = 'inline-flex';
+    btnHome.style.display = 'none';
+    btnRedo.style.display = 'none';
+});
+
 jenisSelect.addEventListener('change', () => {
     updateKelasOptions();
     updateMateriOptions();
@@ -414,7 +448,6 @@ window.deleteHistoryItem = async function(id) {
         const response = await fetch(APPS_SCRIPT_URL + '?' + params.toString());
         const data = await response.json();
         if (data.success) {
-            // Hapus dari allLogs
             allLogs = allLogs.filter(item => item.id != id);
             renderHistory(allLogs);
             showNotification('Item berhasil dihapus', 'success');
@@ -621,6 +654,12 @@ async function generateSoal(historyParams = null) {
             tampilkanSoal();
             mulaiTimer();
             soalSection.style.display = 'block';
+            // Pastikan tombol asli muncul, tombol baru sembunyi
+            btnCekSemua.style.display = 'none';
+            btnExportPDF.style.display = 'inline-flex';
+            btnSelesai.style.display = 'inline-flex';
+            btnHome.style.display = 'none';
+            btnRedo.style.display = 'none';
             let msg = '🤖 Soal digenerate dengan AI';
             if (materi) msg += ' - Materi: ' + materi;
             if (semester) msg += ' - Semester ' + semester;
@@ -647,9 +686,53 @@ function handleError(data) {
     } else showNotification('Terjadi kesalahan tak dikenal', 'error');
 }
 
-// ========== FUNGSI CLEAN LATEX ==========
+// ========== FUNGSI CLEAN LATEX (DENGAN PERBAIKAN SPASI) ==========
 function cleanLatex(text) {
     if (!text) return text;
+    
+    // --- PERBAIKAN TAMBAHAN UNTUK SPASI DAN KARAKTER ---
+    // Hapus semua backslash yang tidak perlu
+    text = text.replace(/\\/g, '');
+    
+    // Perbaiki typo umum
+    text = text.replace(/speeda/g, 'sepeda');
+    text = text.replace(/kecepataan/g, 'kecepatan');
+    text = text.replace(/awaInya/g, 'awalnya');
+    
+    // Tambah spasi setelah tanda baca
+    text = text.replace(/\.([A-Za-z])/g, '. $1');
+    text = text.replace(/\,([A-Za-z])/g, ', $1');
+    
+    // Tambah spasi antara huruf dan angka
+    text = text.replace(/([a-zA-Z])(\d)/g, '$1 $2');
+    text = text.replace(/(\d)([a-zA-Z])/g, '$1 $2');
+    
+    // Tambah spasi sebelum dan sesudah satuan (km, jam, cm, dll) jika menempel
+    text = text.replace(/(\d)(km|jam|cm|liter|menit|m|kg|g)/gi, '$1 $2');
+    text = text.replace(/(km|jam|cm|liter|menit|m|kg|g)([a-zA-Z])/gi, '$1 $2');
+    
+    // Tambah spasi antara kata yang menyatu menggunakan daftar kata umum
+    const commonWords = [
+        'sebuah', 'mobil', 'motor', 'sepeda', 'melaju', 'dengan', 'kecepatan', 'rata-rata', 'rata', 
+        'jarak', 'waktu', 'dalam', 'menempuh', 'berapakah', 'tentukan', 'nilai', 'hasil', 'volume', 
+        'luas', 'panjang', 'lebar', 'tinggi', 'debit', 'liter', 'menit', 'jam', 'km', 'cm', 'persegi', 
+        'segitiga', 'lingkaran', 'tabung', 'balok', 'kubus', 'prisma', 'kerucut', 'bola', 'diameter', 
+        'jari-jari', 'alas', 'sisi', 'rusuk', 'titik', 'garis', 'sudut', 'bak', 'mandi', 'air', 'diisi', 
+        'penuh', 'dari', 'untuk', 'pada', 'oleh', 'atau', 'karena', 'maka', 'tersebut', 'adalah', 
+        'merupakan', 'memiliki', 'dibutuhkan', 'waktu', 'yang', 'untuk', 'dengan', 'kecepa', 'tan'
+    ];
+    // Urutkan dari terpanjang agar kata panjang didahulukan
+    commonWords.sort((a, b) => b.length - a.length);
+    commonWords.forEach(word => {
+        // Cari pola huruf + kata tanpa spasi
+        let regex = new RegExp('([a-zA-Z0-9])(' + word + ')', 'gi');
+        text = text.replace(regex, '$1 $2');
+        // Cari pola kata + huruf tanpa spasi
+        regex = new RegExp('(' + word + ')([a-zA-Z0-9])', 'gi');
+        text = text.replace(regex, '$1 $2');
+    });
+    // --- AKHIR PERBAIKAN TAMBAHAN ---
+    
     const typos = [
         ['memilikiikakar', 'memiliki akar'],
         ['makanilai', 'maka nilai'],
@@ -709,7 +792,25 @@ function tampilkanSoal() {
     let html = '';
     for (let i = 0; i < currentSoal.length; i++) {
         const soal = currentSoal[i];
-        const pilihan = soal.pilihan || ['A. Pilihan A', 'B. Pilihan B', 'C. Pilihan C', 'D. Pilihan D'];
+        let pilihan = soal.pilihan;
+        
+        // Pastikan pilihan adalah array dan memiliki minimal 4 elemen
+        if (!Array.isArray(pilihan) || pilihan.length < 4) {
+            pilihan = ['A. Pilihan A', 'B. Pilihan B', 'C. Pilihan C', 'D. Pilihan D'];
+        }
+        
+        // Perbaiki pilihan jika masih placeholder (untuk soal dummy)
+        if (pilihan[0].includes('Pilihan A') && pilihan[1].includes('Pilihan B')) {
+            // Generate pilihan numerik sederhana berdasarkan indeks soal
+            const base = (i + 1) * 10;
+            pilihan = [
+                `A. ${base}`,
+                `B. ${base + 10}`,
+                `C. ${base + 20}`,
+                `D. ${base + 30}`
+            ];
+        }
+        
         let pertanyaan = cleanLatex(soal.pertanyaan || 'Pertanyaan tidak tersedia'); 
         
         html += '<div class="soal-item" id="soal-' + i + '">';
@@ -846,10 +947,17 @@ async function selesaiLatihan() {
     await syncPendingData(allLogs);
     await loadHistory();
     
+    // Sembunyikan tombol asli, tampilkan tombol baru
+    btnCekSemua.style.display = 'none';
+    btnExportPDF.style.display = 'none';
+    btnSelesai.style.display = 'none';
+    btnHome.style.display = 'inline-flex';
+    btnRedo.style.display = 'inline-flex';
+    
     clearInterval(timerInterval);
 }
 
-// ========== SYNC PENDING DATA ==========
+// ========== SYNC PENDING DATA (MENGGUNAKAN POST DENGAN TEXT/PLAIN) ==========
 async function syncPendingData(existingLogs = []) {
     let pending = [];
     try {
@@ -873,7 +981,7 @@ async function syncPendingData(existingLogs = []) {
     for (let i = pendingToSend.length - 1; i >= 0; i--) {
         const item = pendingToSend[i];
         try {
-            const params = new URLSearchParams({
+            const payload = {
                 action: 'simpanLog',
                 id: item.id,
                 nama_user: item.nama_user,
@@ -888,8 +996,14 @@ async function syncPendingData(existingLogs = []) {
                 semester: item.semester || '',
                 soal_json: JSON.stringify(item.soal_json),
                 waktu_pengerjaan: item.waktu_pengerjaan || ''
+            };
+            const response = await fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/plain;charset=utf-8'
+                },
+                body: JSON.stringify(payload)
             });
-            const response = await fetch(APPS_SCRIPT_URL + '?' + params.toString());
             const data = await response.json();
             if (data.success) {
                 pending = pending.filter(p => p.id !== item.id);
@@ -907,6 +1021,9 @@ async function syncPendingData(existingLogs = []) {
     } else {
         showNotification(`${pending.length} data masih pending.`, 'warning');
     }
+    
+    // Refresh riwayat dari server setelah sinkronisasi
+    await loadHistory();
 }
 
 // ========== EXPORT PDF ==========
