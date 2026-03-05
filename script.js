@@ -1,6 +1,7 @@
 // ============================================
 // SCRIPT.JS - AI LEARNING APP (KURIKULUM MERDEKA)
 // Versi Stabil - Perbaikan Parameter Undefined & Async
+// Fitur: Hapus Riwayat + Retry Otomatis ke Google Sheets
 // ============================================
 
 // KONFIGURASI - GANTI DENGAN URL APPS SCRIPT ANDA!
@@ -329,6 +330,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     jumlahInput.value = 3;
     updateKelasOptions(); // Start with kelas options based on default jenis
     await loadHistory();
+    syncPendingData(); // Coba kirim ulang data yang gagal
 });
 
 // ========== VALIDASI LENGKAP ==========
@@ -658,35 +660,13 @@ async function selesaiLatihan() {
     localStorage.setItem('bankSoalBackup', JSON.stringify(hasilBackup));
     showNotification('✅ Backup lokal tersimpan', 'success');
     
-    const params = new URLSearchParams({
-        action: 'simpanLog',
-        nama_user: nama,
-        skor: skor,
-        total_soal: totalSoal,
-        kelas: kelasSelect.value,
-        mapel: mapelSelect.value,
-        jenis: jenisSelect.value,
-        jumlah: jumlahInput.value,
-        materi: materiSelect.value || '',
-        semester: semesterSelect.value || '',
-        soal_json: JSON.stringify(currentSoal)
-    });
+    // Langsung coba kirim ulang semua data pending (termasuk yang baru)
+    await syncPendingData();
     
-    showNotification('Menyimpan ke Google Sheets...', 'info');
-    try {
-        const response = await fetch(APPS_SCRIPT_URL + '?' + params.toString());
-        const data = await response.json();
-        if (data.success) {
-            showNotification('Skor tersimpan ke database!', 'success');
-            await loadHistory(); // refresh history
-        } else {
-            showNotification('Gagal sync ke Sheets (tapi backup lokal sudah tersimpan)', 'warning');
-        }
-    } catch (e) {
-        showNotification('Gagal sync (backup lokal tersimpan)', 'warning');
-    } finally {
-        clearInterval(timerInterval);
-    }
+    // Refresh history agar data baru muncul (jika berhasil sync)
+    await loadHistory();
+    
+    clearInterval(timerInterval);
 }
 
 function exportPDF() {
@@ -803,6 +783,7 @@ function renderHistory(logs) {
             <div class="history-actions">
                 <button class="btn-redo" onclick="redoAttempt('${idx}')">🔄 Kerjakan Ulang</button>
                 <button class="btn-print" onclick="printHistory('${idx}')">🖨️ Cetak Hasil</button>
+                <button class="btn-delete" onclick="deleteHistoryItem('${idx}')">🗑️ Hapus</button>
             </div>
         </div>
         `;
@@ -810,6 +791,19 @@ function renderHistory(logs) {
     historyList.innerHTML = html;
     window.filteredLogs = logs;
 }
+
+// Hapus item riwayat dari tampilan (lokal)
+window.deleteHistoryItem = function(index) {
+    if (!confirm('Hapus item ini dari riwayat (hanya tampilan)? Data di server tetap ada.')) return;
+    const itemToDelete = window.filteredLogs[index];
+    if (!itemToDelete) return;
+    // Hapus dari allLogs
+    allLogs = allLogs.filter(item => item !== itemToDelete);
+    // Update filteredLogs dengan menghapus item tersebut
+    window.filteredLogs = window.filteredLogs.filter((_, i) => i != index);
+    renderHistory(window.filteredLogs);
+    showNotification('Item dihapus dari daftar', 'success');
+};
 
 window.redoAttempt = function(index) {
     const item = window.filteredLogs[index];
@@ -897,6 +891,54 @@ window.printHistory = function(index) {
         showNotification('Gagal membuat PDF', 'error');
     }
 };
+
+// ========== SINKRONISASI ULANG DATA PENDING ==========
+async function syncPendingData() {
+    let pending = [];
+    try {
+        const existing = localStorage.getItem('bankSoalBackup');
+        if (existing) pending = JSON.parse(existing);
+    } catch (e) {
+        return;
+    }
+    if (pending.length === 0) return;
+
+    showNotification(`Mengirim ${pending.length} data pending ke server...`, 'info');
+
+    for (let i = pending.length - 1; i >= 0; i--) {
+        const item = pending[i];
+        try {
+            const params = new URLSearchParams({
+                action: 'simpanLog',
+                nama_user: item.nama_user,
+                skor: item.skor,
+                total_soal: item.total_soal,
+                kelas: item.kelas,
+                mapel: item.mapel,
+                jenis: item.jenis,
+                jumlah: item.jumlah,
+                materi: item.materi || '',
+                semester: item.semester || '',
+                soal_json: JSON.stringify(item.soal_json)
+            });
+            const response = await fetch(APPS_SCRIPT_URL + '?' + params.toString());
+            const data = await response.json();
+            if (data.success) {
+                pending.splice(i, 1); // hapus yang berhasil
+            } else {
+                console.log('Gagal sync item:', data);
+            }
+        } catch (e) {
+            console.log('Error sync item:', e);
+        }
+    }
+    localStorage.setItem('bankSoalBackup', JSON.stringify(pending));
+    if (pending.length === 0) {
+        showNotification('Semua data pending berhasil dikirim!', 'success');
+    } else {
+        showNotification(`${pending.length} data masih pending.`, 'warning');
+    }
+}
 
 // ========== NOTIFIKASI ==========
 function showNotification(msg, type = 'info') {

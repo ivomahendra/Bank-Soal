@@ -518,6 +518,42 @@ button:disabled {
     color: white;
 }
 
+/* Tombol Hapus di Riwayat */
+.btn-delete {
+    flex: 1;
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    border: 2px solid var(--danger);
+    background: #fee2e2;
+    color: var(--danger);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+}
+
+.btn-delete:hover {
+    background: var(--danger);
+    color: white;
+}
+
+/* Penyesuaian untuk layar kecil */
+@media (max-width: 768px) {
+    .history-actions {
+        flex-wrap: wrap;
+    }
+    .btn-delete {
+        min-width: 80px;
+    }
+}
+
+@media (max-width: 480px) {
+    .btn-delete {
+        padding: 8px 10px;
+        font-size: 0.75rem;
+    }
+}
+
 /* ========== NOTIFICATIONS ========== */
 .notification {
     position: fixed;
