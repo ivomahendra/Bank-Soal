@@ -328,10 +328,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     jumlahInput.max = 30;
     jumlahInput.min = 1;
     jumlahInput.value = 3;
-    updateKelasOptions(); // Start with kelas options based on default jenis
-    await loadHistory();
-    syncPendingData(); // Coba kirim ulang data yang gagal
+    updateKelasOptions();
+    await loadHistory();                // 1. Ambil data dari server
+    await syncPendingData(allLogs);      // 2. Kirim data pending yang belum ada
 });
+
 
 // ========== VALIDASI LENGKAP ==========
 function validateAllFields() {
@@ -622,6 +623,7 @@ function cekSemuaJawaban() {
     return { skor, semuaTerjawab };
 }
 
+// ========== FUNGSI SELESAI LATIHAN (dimodifikasi) ==========
 async function selesaiLatihan() {
     if (!confirm('Selesai dan simpan skor ke riwayat?')) return;
     const { skor, semuaTerjawab } = cekSemuaJawaban();
@@ -660,8 +662,8 @@ async function selesaiLatihan() {
     localStorage.setItem('bankSoalBackup', JSON.stringify(hasilBackup));
     showNotification('✅ Backup lokal tersimpan', 'success');
     
-    // Langsung coba kirim ulang semua data pending (termasuk yang baru)
-    await syncPendingData();
+    // Coba kirim ulang semua data pending (termasuk yang baru) – tanpa duplikasi
+    await syncPendingData(allLogs);
     
     // Refresh history agar data baru muncul (jika berhasil sync)
     await loadHistory();
@@ -841,7 +843,7 @@ window.printHistory = function(index) {
 };
 
 // ========== SINKRONISASI ULANG DATA PENDING ==========
-async function syncPendingData() {
+async function syncPendingData(existingLogs = []) {
     let pending = [];
     try {
         const existing = localStorage.getItem('bankSoalBackup');
@@ -851,10 +853,29 @@ async function syncPendingData() {
     }
     if (pending.length === 0) return;
 
-    showNotification(`Mengirim ${pending.length} data pending ke server...`, 'info');
+    // Buat fingerprint dari data yang sudah ada di server
+    const existingFingerprints = new Set();
+    existingLogs.forEach(log => {
+        const fp = `${log.nama_user}|${log.tanggal}|${log.skor}|${log.total_soal}|${log.kelas}|${log.mapel}|${log.jenis}`;
+        existingFingerprints.add(fp);
+    });
 
-    for (let i = pending.length - 1; i >= 0; i--) {
-        const item = pending[i];
+    // Filter pending yang belum ada di server
+    const pendingToSend = pending.filter(item => {
+        const fp = `${item.nama_user}|${item.tanggal}|${item.skor}|${item.total_soal}|${item.kelas}|${item.mapel}|${item.jenis}`;
+        return !existingFingerprints.has(fp);
+    });
+
+    if (pendingToSend.length === 0) {
+        // Semua data sudah ada di server, hapus semua pending
+        localStorage.removeItem('bankSoalBackup');
+        return;
+    }
+
+    showNotification(`Mengirim ${pendingToSend.length} data pending ke server...`, 'info');
+
+    for (let i = pendingToSend.length - 1; i >= 0; i--) {
+        const item = pendingToSend[i];
         try {
             const params = new URLSearchParams({
                 action: 'simpanLog',
@@ -872,7 +893,8 @@ async function syncPendingData() {
             const response = await fetch(APPS_SCRIPT_URL + '?' + params.toString());
             const data = await response.json();
             if (data.success) {
-                pending.splice(i, 1); // hapus yang berhasil
+                // Hapus dari pending asli
+                pending = pending.filter(p => p !== item);
             } else {
                 console.log('Gagal sync item:', data);
             }
@@ -880,6 +902,7 @@ async function syncPendingData() {
             console.log('Error sync item:', e);
         }
     }
+
     localStorage.setItem('bankSoalBackup', JSON.stringify(pending));
     if (pending.length === 0) {
         showNotification('Semua data pending berhasil dikirim!', 'success');
