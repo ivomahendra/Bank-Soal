@@ -537,6 +537,22 @@ button:disabled {
     color: white;
 }
 
+@media (max-width: 768px) {
+    .history-actions {
+        flex-wrap: wrap;
+    }
+    .btn-delete {
+        min-width: 80px;
+    }
+}
+
+@media (max-width: 480px) {
+    .btn-delete {
+        padding: 8px 10px;
+        font-size: 0.75rem;
+    }
+}
+
 /* Penyesuaian untuk layar kecil */
 @media (max-width: 768px) {
     .history-actions {

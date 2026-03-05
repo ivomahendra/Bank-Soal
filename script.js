@@ -711,58 +711,6 @@ function shuffleArray(array) {
 }
 
 // ========== RIWAYAT ==========
-async function loadHistory() {
-    try {
-        const response = await fetch(APPS_SCRIPT_URL + '?action=ambilLog');
-        const data = await response.json();
-        if (data.success && data.log.length > 0) {
-            allLogs = data.log;
-            populateKelasFilter();
-            renderHistory(allLogs);
-        } else {
-            historyList.innerHTML = '<p class="loading">Belum ada riwayat pengerjaan.</p>';
-            allLogs = [];
-        }
-    } catch (e) {
-        historyList.innerHTML = '<p class="loading">Gagal memuat riwayat.</p>';
-        console.error(e);
-    }
-}
-
-function populateKelasFilter() {
-    const kelasSet = new Set();
-    allLogs.forEach(log => {
-        if (log.kelas) kelasSet.add(log.kelas);
-    });
-    const kelasSorted = Array.from(kelasSet).sort((a,b) => a - b);
-    filterKelas.innerHTML = '<option value="">Semua Kelas</option>';
-    kelasSorted.forEach(k => {
-        const option = document.createElement('option');
-        option.value = k;
-        option.textContent = k;
-        filterKelas.appendChild(option);
-    });
-}
-
-function applyFilter() {
-    const namaFilter = filterNama.value.trim().toLowerCase();
-    const kelasFilter = filterKelas.value;
-    
-    const filtered = allLogs.filter(log => {
-        const matchNama = !namaFilter || (log.nama_user && log.nama_user.toLowerCase().includes(namaFilter));
-        const matchKelas = !kelasFilter || log.kelas == kelasFilter;
-        return matchNama && matchKelas;
-    });
-    
-    renderHistory(filtered);
-}
-
-function resetFilter() {
-    filterNama.value = '';
-    filterKelas.value = '';
-    renderHistory(allLogs);
-}
-
 function renderHistory(logs) {
     logs.sort((a,b) => new Date(b.tanggal) - new Date(a.tanggal));
     if (logs.length === 0) {
