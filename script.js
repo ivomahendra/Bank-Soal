@@ -1,7 +1,6 @@
 // ============================================
 // SCRIPT.JS - AI LEARNING APP (KURIKULUM MERDEKA)
-// Versi Stabil - Perbaikan Parameter Undefined & Async
-// Fitur: Hapus Riwayat + Retry Otomatis ke Google Sheets
+// Versi Stabil - Perbaikan Riwayat, Hapus DB, Multi API Key
 // ============================================
 
 // KONFIGURASI - GANTI DENGAN URL APPS SCRIPT ANDA!
@@ -14,7 +13,6 @@ const mapelByJenjang = {
     'SMA': ['Matematika', 'Fisika', 'Kimia', 'Biologi', 'Ekonomi', 'Sejarah', 'Geografi', 'Bahasa Indonesia', 'Bahasa Inggris']
 };
 
-// 🔹 OSN-specific subjects mapping
 const mapelByOSNLevel = {
     'SD': ['Matematika', 'Ilmu Pengetahuan Alam (IPA)'],
     'SMP': ['Matematika', 'Ilmu Pengetahuan Alam (IPA)', 'Ilmu Pengetahuan Sosial (IPS)'],
@@ -168,7 +166,6 @@ function updateKelasOptions() {
     
     let options = [];
     if (jenis === 'OSN') {
-        // OSN: hanya SD (1-6), SMP (7-9), SMA (10-12) tanpa label lain
         options = [
             { value: '1', label: 'SD - Kelas 1' },
             { value: '2', label: 'SD - Kelas 2' },
@@ -184,7 +181,6 @@ function updateKelasOptions() {
             { value: '12', label: 'SMA - Kelas 12' }
         ];
     } else {
-        // Non-OSN: full options
         options = [
             { value: '1', label: '1 SD' },
             { value: '2', label: '2 SD' },
@@ -225,7 +221,6 @@ function updateMapelOptions() {
     else if (kelasNum <= 9) jenjang = 'SMP';
     else jenjang = 'SMA';
     
-    // Use OSN-specific subjects if exam type is OSN
     let mapelList = [];
     if (jenis === 'OSN') {
         mapelList = mapelByOSNLevel[jenjang] || [];
@@ -244,7 +239,6 @@ function updateMapelOptions() {
         option.textContent = m;
         mapelSelect.appendChild(option);
     });
-    // Pilih yang pertama jika sebelumnya tidak ada
     if (!mapelSelect.value && mapelList.length > 0) {
         mapelSelect.value = mapelList[0];
     }
@@ -290,7 +284,7 @@ function toggleSemesterOptions() {
     semesterGroup.style.display = jenisSelect.value === 'UAS' ? 'block' : 'none';
 }
 
-// ========== EVENT LISTENERS (gunakan async) ==========
+// ========== EVENT LISTENERS ==========
 btnGenerate.addEventListener('click', async () => {
     await generateSoal();
 });
@@ -323,18 +317,205 @@ mapelSelect.addEventListener('change', updateMateriOptions);
 btnApplyFilter.addEventListener('click', applyFilter);
 btnResetFilter.addEventListener('click', resetFilter);
 
-// Load history saat halaman dimuat
 document.addEventListener('DOMContentLoaded', async () => {
     jumlahInput.max = 30;
     jumlahInput.min = 1;
     jumlahInput.value = 3;
     updateKelasOptions();
-    await loadHistory();                // 1. Ambil data dari server
-    await syncPendingData(allLogs);      // 2. Kirim data pending yang belum ada
+    await loadHistory();
+    await syncPendingData(allLogs);
 });
 
+// ========== LOAD HISTORY ==========
+async function loadHistory() {
+    try {
+        const params = new URLSearchParams({ action: 'ambilLog' });
+        const response = await fetch(APPS_SCRIPT_URL + '?' + params.toString());
+        const data = await response.json();
+        if (data.success) {
+            allLogs = data.log || [];
+            // Isi filter kelas dengan opsi unik dari logs
+            const kelasSet = new Set(allLogs.map(item => item.kelas).filter(k => k));
+            filterKelas.innerHTML = '<option value="">Semua Kelas</option>';
+            [...kelasSet].sort().forEach(k => {
+                const opt = document.createElement('option');
+                opt.value = k;
+                opt.textContent = k;
+                filterKelas.appendChild(opt);
+            });
+            renderHistory(allLogs);
+        } else {
+            showNotification('Gagal memuat riwayat', 'error');
+        }
+    } catch (e) {
+        showNotification('Gagal terhubung ke server', 'error');
+    }
+}
 
-// ========== VALIDASI LENGKAP ==========
+// ========== RENDER HISTORY ==========
+function renderHistory(logs) {
+    logs.sort((a,b) => new Date(b.tanggal) - new Date(a.tanggal));
+    if (logs.length === 0) {
+        historyList.innerHTML = '<p class="loading">Tidak ada riwayat yang cocok.</p>';
+        return;
+    }
+    let html = '';
+    logs.forEach((item) => {
+        const tgl = new Date(item.tanggal).toLocaleString('id-ID');
+        const persen = Math.round((item.skor / item.total_soal) * 100) || 0;
+        html += `
+        <div class="history-item" data-id="${item.id || ''}">
+            <div class="history-info">
+                <p><strong>${item.nama_user}</strong> - ${tgl}</p>
+                <p>${item.kelas} | ${item.mapel} | ${item.jenis} ${item.materi ? '| '+item.materi : ''} ${item.semester ? '| Semester '+item.semester : ''}</p>
+                <p>Skor: ${item.skor}/${item.total_soal} (${persen}%)</p>
+            </div>
+            <div class="history-actions">
+                <button class="btn-redo" onclick="redoAttempt('${item.id}')">🔄 Kerjakan Ulang</button>
+                <button class="btn-print" onclick="printHistory('${item.id}')">🖨️ Cetak Hasil</button>
+                <button class="btn-delete" onclick="deleteHistoryItem('${item.id}')">🗑️ Hapus</button>
+            </div>
+        </div>
+        `;
+    });
+    historyList.innerHTML = html;
+    window.filteredLogs = logs;
+}
+
+// ========== FILTER ==========
+function applyFilter() {
+    const namaFilter = filterNama.value.trim().toLowerCase();
+    const kelasFilter = filterKelas.value;
+    let filtered = allLogs;
+    if (namaFilter) {
+        filtered = filtered.filter(item => item.nama_user.toLowerCase().includes(namaFilter));
+    }
+    if (kelasFilter) {
+        filtered = filtered.filter(item => item.kelas == kelasFilter);
+    }
+    renderHistory(filtered);
+}
+
+function resetFilter() {
+    filterNama.value = '';
+    filterKelas.value = '';
+    renderHistory(allLogs);
+}
+
+// ========== DELETE HISTORY ITEM ==========
+window.deleteHistoryItem = async function(id) {
+    if (!confirm('Hapus item ini dari riwayat secara permanen?')) return;
+    
+    try {
+        const params = new URLSearchParams({
+            action: 'hapusLog',
+            id: id
+        });
+        const response = await fetch(APPS_SCRIPT_URL + '?' + params.toString());
+        const data = await response.json();
+        if (data.success) {
+            // Hapus dari allLogs
+            allLogs = allLogs.filter(item => item.id != id);
+            renderHistory(allLogs);
+            showNotification('Item berhasil dihapus', 'success');
+        } else {
+            showNotification('Gagal menghapus: ' + data.error, 'error');
+        }
+    } catch (e) {
+        showNotification('Gagal terhubung ke server', 'error');
+    }
+};
+
+// ========== REDO ATTEMPT ==========
+window.redoAttempt = async function(id) {
+    const item = allLogs.find(item => item.id == id);
+    if (!item) return;
+    
+    if (item.soal_json) {
+        try {
+            let soalBaru = JSON.parse(item.soal_json);
+            soalBaru = shuffleArray(soalBaru);
+            currentSoal = soalBaru;
+            totalSoal = currentSoal.length;
+            jawabanUser = new Array(totalSoal).fill(null);
+            tampilkanSoal();
+            mulaiTimer();
+            soalSection.style.display = 'block';
+            namaUserInput.value = item.nama_user;
+            kelasSelect.value = item.kelas;
+            updateMapelOptions();
+            mapelSelect.value = item.mapel;
+            jenisSelect.value = item.jenis;
+            jumlahInput.value = item.jumlah;
+            if (item.materi && materiSelect) materiSelect.value = item.materi;
+            if (item.semester && semesterSelect) semesterSelect.value = item.semester;
+            tingkatKesulitanSelect.value = item.tingkatKesulitan || 'Sedang';
+            showNotification('✅ Soal dimuat & diacak!', 'info');
+        } catch (e) {
+            showNotification('Gagal memuat soal', 'error');
+        }
+    } else {
+        generateSoal({
+            kelas: item.kelas,
+            mapel: item.mapel,
+            jenis: item.jenis,
+            jumlah: item.jumlah,
+            materi: item.materi,
+            semester: item.semester,
+            nama_user: item.nama_user,
+            tingkatKesulitan: item.tingkatKesulitan || 'Sedang'
+        });
+    }
+};
+
+// ========== PRINT HISTORY ==========
+window.printHistory = async function(id) {
+    const item = allLogs.find(item => item.id == id);
+    if (!item || !item.soal_json) {
+        showNotification('Data soal tidak tersedia', 'error');
+        return;
+    }
+    try {
+        const soal = JSON.parse(item.soal_json);
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.setFontSize(20); doc.text('Hasil Pengerjaan', 105, 20, { align: 'center' });
+        doc.setFontSize(11);
+        doc.text('Nama: ' + item.nama_user, 20, 35);
+        doc.text(`Kelas: ${item.kelas} | Mapel: ${item.mapel} | Jenis: ${item.jenis}`, 20, 42);
+        doc.text('Tanggal: ' + new Date(item.tanggal).toLocaleDateString('id-ID'), 20, 49);
+        const persen = Math.round((item.skor / item.total_soal) * 100) || 0;
+        doc.text(`Skor: ${item.skor}/${item.total_soal} (${persen}%)`, 20, 56);
+        let y = 70, lineH = 7;
+        soal.forEach((s, i) => {
+            if (y > 280) { doc.addPage(); y = 20; }
+            doc.setFont(undefined, 'bold');
+            let q = (i+1) + '. ' + (s.pertanyaan || '').replace(/\$/g,'');
+            const qL = doc.splitTextToSize(q, 170);
+            doc.text(qL, 20, y);
+            y += qL.length * lineH;
+            doc.setFont(undefined, 'normal');
+            if (s.pilihan) {
+                s.pilihan.forEach(p => {
+                    const pl = '   ' + p.replace(/\$/g,'');
+                    const pL = doc.splitTextToSize(pl, 165);
+                    doc.text(pL, 25, y);
+                    y += pL.length * lineH;
+                });
+            }
+            doc.text('Jawaban benar: ' + (s.jawaban_benar || 'A'), 25, y);
+            y += lineH;
+            doc.text('Pembahasan: ' + (s.solusi || '').replace(/\$/g,''), 25, y);
+            y += lineH * 2;
+        });
+        doc.save('hasil-'+item.nama_user+'-'+Date.now()+'.pdf');
+        showNotification('PDF hasil siap', 'success');
+    } catch (e) {
+        showNotification('Gagal membuat PDF', 'error');
+    }
+};
+
+// ========== VALIDASI ==========
 function validateAllFields() {
     if (!kelasSelect.value) {
         showNotification('❌ Kelas belum dipilih!', 'error');
@@ -375,7 +556,7 @@ function validateAllFields() {
     return true;
 }
 
-// ========== GENERATE SOAL (Metode GET yang aman) ==========
+// ========== GENERATE SOAL ==========
 async function generateSoal(historyParams = null) {
     let kelas, mapel, jenis, jumlah, materi, semester, nama, tingkatKesulitan;
     
@@ -388,9 +569,8 @@ async function generateSoal(historyParams = null) {
         semester = historyParams.semester || '';
         nama = historyParams.nama_user;
         tingkatKesulitan = historyParams.tingkatKesulitan || 'Sedang';
-        // Set dropdown
         kelasSelect.value = kelas;
-        updateMapelOptions(); // sync, panggil biasa
+        updateMapelOptions();
         mapelSelect.value = mapel;
         jenisSelect.value = jenis;
         jumlahInput.value = jumlah;
@@ -410,7 +590,6 @@ async function generateSoal(historyParams = null) {
         tingkatKesulitan = tingkatKesulitanSelect.value || 'Sedang';
     }
 
-    // Pastikan tidak ada nilai undefined atau string 'undefined'
     if (!kelas || kelas === 'undefined' || !mapel || mapel === 'undefined' || !jenis || jenis === 'undefined' || !nama) {
         showNotification('Data tidak lengkap atau tidak valid!', 'error');
         return;
@@ -420,7 +599,6 @@ async function generateSoal(historyParams = null) {
     btnGenerate.innerHTML = '<span class="spinner"></span> Menyiapkan soal...';
 
     try {
-        // Gunakan URLSearchParams untuk encoding otomatis
         const params = new URLSearchParams({
             action: 'generateSoal',
             kelas: kelas,
@@ -623,7 +801,7 @@ function cekSemuaJawaban() {
     return { skor, semuaTerjawab };
 }
 
-// ========== FUNGSI SELESAI LATIHAN (dimodifikasi) ==========
+// ========== SELESAI LATIHAN ==========
 async function selesaiLatihan() {
     if (!confirm('Selesai dan simpan skor ke riwayat?')) return;
     const { skor, semuaTerjawab } = cekSemuaJawaban();
@@ -632,8 +810,11 @@ async function selesaiLatihan() {
     
     const nama = namaUserInput.value.trim() || 'Anonim';
     
-    // 🔹 Local Storage Backup
+    // Buat ID unik
+    const id = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    
     const hasil = {
+        id: id,
         nama_user: nama,
         skor: skor,
         total_soal: totalSoal,
@@ -662,15 +843,73 @@ async function selesaiLatihan() {
     localStorage.setItem('bankSoalBackup', JSON.stringify(hasilBackup));
     showNotification('✅ Backup lokal tersimpan', 'success');
     
-    // Coba kirim ulang semua data pending (termasuk yang baru) – tanpa duplikasi
     await syncPendingData(allLogs);
-    
-    // Refresh history agar data baru muncul (jika berhasil sync)
     await loadHistory();
     
     clearInterval(timerInterval);
 }
 
+// ========== SYNC PENDING DATA ==========
+async function syncPendingData(existingLogs = []) {
+    let pending = [];
+    try {
+        const existing = localStorage.getItem('bankSoalBackup');
+        if (existing) pending = JSON.parse(existing);
+    } catch (e) {
+        return;
+    }
+    if (pending.length === 0) return;
+
+    const existingIds = new Set(existingLogs.map(log => log.id).filter(id => id));
+    const pendingToSend = pending.filter(item => !existingIds.has(item.id));
+
+    if (pendingToSend.length === 0) {
+        localStorage.removeItem('bankSoalBackup');
+        return;
+    }
+
+    showNotification(`Mengirim ${pendingToSend.length} data pending ke server...`, 'info');
+
+    for (let i = pendingToSend.length - 1; i >= 0; i--) {
+        const item = pendingToSend[i];
+        try {
+            const params = new URLSearchParams({
+                action: 'simpanLog',
+                id: item.id,
+                nama_user: item.nama_user,
+                skor: item.skor,
+                total_soal: item.total_soal,
+                kelas: item.kelas,
+                mapel: item.mapel,
+                jenis: item.jenis,
+                jumlah: item.jumlah,
+                tingkatKesulitan: item.tingkatKesulitan || '',
+                materi: item.materi || '',
+                semester: item.semester || '',
+                soal_json: JSON.stringify(item.soal_json),
+                waktu_pengerjaan: item.waktu_pengerjaan || ''
+            });
+            const response = await fetch(APPS_SCRIPT_URL + '?' + params.toString());
+            const data = await response.json();
+            if (data.success) {
+                pending = pending.filter(p => p.id !== item.id);
+            } else {
+                console.log('Gagal sync item:', data);
+            }
+        } catch (e) {
+            console.log('Error sync item:', e);
+        }
+    }
+
+    localStorage.setItem('bankSoalBackup', JSON.stringify(pending));
+    if (pending.length === 0) {
+        showNotification('Semua data pending berhasil dikirim!', 'success');
+    } else {
+        showNotification(`${pending.length} data masih pending.`, 'warning');
+    }
+}
+
+// ========== EXPORT PDF ==========
 function exportPDF() {
     if (!currentSoal.length) { showNotification('Tidak ada soal', 'error'); return; }
     showNotification('Menyiapkan PDF...', 'info');
@@ -702,7 +941,7 @@ function exportPDF() {
     showNotification('PDF siap', 'success');
 }
 
-// ========== FUNGSI UTILITY ==========
+// ========== UTILITY ==========
 function shuffleArray(array) {
     const arr = [...array];
     for (let i = arr.length - 1; i > 0; i--) {
@@ -712,206 +951,6 @@ function shuffleArray(array) {
     return arr;
 }
 
-// ========== RIWAYAT ==========
-function renderHistory(logs) {
-    logs.sort((a,b) => new Date(b.tanggal) - new Date(a.tanggal));
-    if (logs.length === 0) {
-        historyList.innerHTML = '<p class="loading">Tidak ada riwayat yang cocok.</p>';
-        return;
-    }
-    let html = '';
-    logs.forEach((item, idx) => {
-        const tgl = new Date(item.tanggal).toLocaleString('id-ID');
-        const persen = Math.round((item.skor / item.total_soal) * 100) || 0;
-        html += `
-        <div class="history-item" data-idx="${idx}">
-            <div class="history-info">
-                <p><strong>${item.nama_user}</strong> - ${tgl}</p>
-                <p>${item.kelas} | ${item.mapel} | ${item.jenis} ${item.materi ? '| '+item.materi : ''} ${item.semester ? '| Semester '+item.semester : ''}</p>
-                <p>Skor: ${item.skor}/${item.total_soal} (${persen}%)</p>
-            </div>
-            <div class="history-actions">
-                <button class="btn-redo" onclick="redoAttempt('${idx}')">🔄 Kerjakan Ulang</button>
-                <button class="btn-print" onclick="printHistory('${idx}')">🖨️ Cetak Hasil</button>
-                <button class="btn-delete" onclick="deleteHistoryItem('${idx}')">🗑️ Hapus</button>
-            </div>
-        </div>
-        `;
-    });
-    historyList.innerHTML = html;
-    window.filteredLogs = logs;
-}
-
-// Hapus item riwayat dari tampilan (lokal)
-window.deleteHistoryItem = function(index) {
-    if (!confirm('Hapus item ini dari riwayat (hanya tampilan)? Data di server tetap ada.')) return;
-    const itemToDelete = window.filteredLogs[index];
-    if (!itemToDelete) return;
-    // Hapus dari allLogs
-    allLogs = allLogs.filter(item => item !== itemToDelete);
-    // Update filteredLogs dengan menghapus item tersebut
-    window.filteredLogs = window.filteredLogs.filter((_, i) => i != index);
-    renderHistory(window.filteredLogs);
-    showNotification('Item dihapus dari daftar', 'success');
-};
-
-window.redoAttempt = function(index) {
-    const item = window.filteredLogs[index];
-    if (!item) return;
-    if (item.soal_json) {
-        try {
-            let soalBaru = JSON.parse(item.soal_json);
-            
-            // 🔹 QUESTION RANDOMIZATION - Acak urutan soal saat mengerjakan ulang
-            soalBaru = shuffleArray(soalBaru);
-            
-            currentSoal = soalBaru;
-            totalSoal = currentSoal.length;
-            jawabanUser = new Array(totalSoal).fill(null);
-            tampilkanSoal();
-            mulaiTimer();
-            soalSection.style.display = 'block';
-            namaUserInput.value = item.nama_user;
-            kelasSelect.value = item.kelas;
-            updateMapelOptions();
-            mapelSelect.value = item.mapel;
-            jenisSelect.value = item.jenis;
-            jumlahInput.value = item.jumlah;
-            if (item.materi && materiSelect) materiSelect.value = item.materi;
-            if (item.semester && semesterSelect) semesterSelect.value = item.semester;
-            showNotification('✅ Soal dimuat & diacak! Kerjakan dengan urutan berbeda.', 'info');
-        } catch (e) {
-            showNotification('Gagal memuat soal', 'error');
-        }
-    } else {
-        generateSoal({
-            kelas: item.kelas,
-            mapel: item.mapel,
-            jenis: item.jenis,
-            jumlah: item.jumlah,
-            materi: item.materi,
-            semester: item.semester,
-            nama_user: item.nama_user
-        });
-    }
-};
-
-window.printHistory = function(index) {
-    const item = window.filteredLogs[index];
-    if (!item || !item.soal_json) {
-        showNotification('Data soal tidak tersedia', 'error');
-        return;
-    }
-    try {
-        const soal = JSON.parse(item.soal_json);
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        doc.setFontSize(20); doc.text('Hasil Pengerjaan', 105, 20, { align: 'center' });
-        doc.setFontSize(11);
-        doc.text('Nama: ' + item.nama_user, 20, 35);
-        doc.text(`Kelas: ${item.kelas} | Mapel: ${item.mapel} | Jenis: ${item.jenis}`, 20, 42);
-        doc.text('Tanggal: ' + new Date(item.tanggal).toLocaleDateString('id-ID'), 20, 49);
-        const persen = Math.round((item.skor / item.total_soal) * 100) || 0;
-        doc.text(`Skor: ${item.skor}/${item.total_soal} (${persen}%)`, 20, 56);
-        let y = 70, lineH = 7;
-        soal.forEach((s, i) => {
-            if (y > 280) { doc.addPage(); y = 20; }
-            doc.setFont(undefined, 'bold');
-            let q = (i+1) + '. ' + (s.pertanyaan || '').replace(/\$/g,'');
-            const qL = doc.splitTextToSize(q, 170);
-            doc.text(qL, 20, y);
-            y += qL.length * lineH;
-            doc.setFont(undefined, 'normal');
-            if (s.pilihan) {
-                s.pilihan.forEach(p => {
-                    const pl = '   ' + p.replace(/\$/g,'');
-                    const pL = doc.splitTextToSize(pl, 165);
-                    doc.text(pL, 25, y);
-                    y += pL.length * lineH;
-                });
-            }
-            doc.text('Jawaban benar: ' + (s.jawaban_benar || 'A'), 25, y);
-            y += lineH;
-            doc.text('Pembahasan: ' + (s.solusi || '').replace(/\$/g,''), 25, y);
-            y += lineH * 2;
-        });
-        doc.save('hasil-'+item.nama_user+'-'+Date.now()+'.pdf');
-        showNotification('PDF hasil siap', 'success');
-    } catch (e) {
-        showNotification('Gagal membuat PDF', 'error');
-    }
-};
-
-// ========== SINKRONISASI ULANG DATA PENDING ==========
-async function syncPendingData(existingLogs = []) {
-    let pending = [];
-    try {
-        const existing = localStorage.getItem('bankSoalBackup');
-        if (existing) pending = JSON.parse(existing);
-    } catch (e) {
-        return;
-    }
-    if (pending.length === 0) return;
-
-    // Buat fingerprint dari data yang sudah ada di server
-    const existingFingerprints = new Set();
-    existingLogs.forEach(log => {
-        const fp = `${log.nama_user}|${log.tanggal}|${log.skor}|${log.total_soal}|${log.kelas}|${log.mapel}|${log.jenis}`;
-        existingFingerprints.add(fp);
-    });
-
-    // Filter pending yang belum ada di server
-    const pendingToSend = pending.filter(item => {
-        const fp = `${item.nama_user}|${item.tanggal}|${item.skor}|${item.total_soal}|${item.kelas}|${item.mapel}|${item.jenis}`;
-        return !existingFingerprints.has(fp);
-    });
-
-    if (pendingToSend.length === 0) {
-        // Semua data sudah ada di server, hapus semua pending
-        localStorage.removeItem('bankSoalBackup');
-        return;
-    }
-
-    showNotification(`Mengirim ${pendingToSend.length} data pending ke server...`, 'info');
-
-    for (let i = pendingToSend.length - 1; i >= 0; i--) {
-        const item = pendingToSend[i];
-        try {
-            const params = new URLSearchParams({
-                action: 'simpanLog',
-                nama_user: item.nama_user,
-                skor: item.skor,
-                total_soal: item.total_soal,
-                kelas: item.kelas,
-                mapel: item.mapel,
-                jenis: item.jenis,
-                jumlah: item.jumlah,
-                materi: item.materi || '',
-                semester: item.semester || '',
-                soal_json: JSON.stringify(item.soal_json)
-            });
-            const response = await fetch(APPS_SCRIPT_URL + '?' + params.toString());
-            const data = await response.json();
-            if (data.success) {
-                // Hapus dari pending asli
-                pending = pending.filter(p => p !== item);
-            } else {
-                console.log('Gagal sync item:', data);
-            }
-        } catch (e) {
-            console.log('Error sync item:', e);
-        }
-    }
-
-    localStorage.setItem('bankSoalBackup', JSON.stringify(pending));
-    if (pending.length === 0) {
-        showNotification('Semua data pending berhasil dikirim!', 'success');
-    } else {
-        showNotification(`${pending.length} data masih pending.`, 'warning');
-    }
-}
-
-// ========== NOTIFIKASI ==========
 function showNotification(msg, type = 'info') {
     const old = document.querySelector('.notification');
     if (old) old.remove();
