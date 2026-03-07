@@ -1,127 +1,801 @@
 // ============================================
 // SCRIPT.JS - AI LEARNING APP (KURIKULUM MERDEKA)
-// Versi Stabil - Perbaikan Tampilan, Tombol Pasca-Latihan, CleanLatex
+// Versi Stabil - Integrasi data per semester (UAS full materi)
 // ============================================
 
 // KONFIGURASI - GANTI DENGAN URL APPS SCRIPT ANDA!
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzUdIyXf5czqwnZjGK1Ech1lWtx-7QyR90FJE3GqpBgb3_MyPLO3a3p5mMX-xYPLNZBiA/exec';
 
-// ========== DATA KURIKULUM MERDEKA ==========
-const mapelByJenjang = {
-    'SD': ['Matematika', 'IPA', 'Bahasa Indonesia', 'Bahasa Inggris'],
-    'SMP': ['Matematika', 'IPA', 'IPS', 'Bahasa Indonesia', 'Bahasa Inggris'],
-    'SMA': ['Matematika', 'Fisika', 'Kimia', 'Biologi', 'Ekonomi', 'Sejarah', 'Geografi', 'Bahasa Indonesia', 'Bahasa Inggris']
+// ========== DATA DROPDOWN BARU (PER SEMESTER) ==========
+const dropdownData = {
+  "1": {
+    "nama": "Kelas 1 SD",
+    "mapel": [
+      {
+        "nama": "Pendidikan Agama dan Budi Pekerti",
+        "semester1": ["Aku Cinta Allah", "Mengenal Malaikat", "Akhlak Terpuji", "Bersuci"],
+        "semester2": ["Shalat", "Kisah Nabi", "Hidup Bersih", "Doa Sehari-hari"]
+      },
+      {
+        "nama": "Pendidikan Pancasila",
+        "semester1": ["Aku dan Temanku", "Aturan di Rumah", "Lambang Negara"],
+        "semester2": ["Hak dan Kewajiban", "Gotong Royong", "Sikap Tolong Menolong"]
+      },
+      {
+        "nama": "Bahasa Indonesia",
+        "semester1": ["Mengenal Huruf", "Membaca Suku Kata", "Menulis Kata", "Kosakata sehari-hari"],
+        "semester2": ["Kalimat Sederhana", "Cerita Bergambar", "Membaca Nyaring", "Puisi Anak"]
+      },
+      {
+        "nama": "Matematika",
+        "semester1": ["Bilangan 1-10", "Membandingkan Banyak Benda", "Penjumlahan Sederhana", "Pengurangan Sederhana"],
+        "semester2": ["Bangun Datar", "Pola Bilangan", "Mengukur Panjang", "Waktu"]
+      },
+      {
+        "nama": "Pendidikan Jasmani, Olahraga, dan Kesehatan (PJOK)",
+        "semester1": ["Gerak Dasar Lokomotor", "Gerak Dasar Non-lokomotor", "Permainan Sederhana"],
+        "semester2": ["Kebersihan Diri", "Makanan Sehat", "Aktivitas Air"]
+      },
+      {
+        "nama": "Seni dan Budaya (Musik/Rupa/Teater/Tari)",
+        "semester1": ["Menggambar Bebas", "Mewarnai", "Menyanyi Lagu Anak"],
+        "semester2": ["Gerak Tari Sederhana", "Bermain Peran", "Membuat Kolase"]
+      },
+      {
+        "nama": "Muatan Lokal",
+        "semester1": ["Bahasa Daerah", "Permainan Tradisional"],
+        "semester2": ["Kesenian Daerah", "Makanan Tradisional"]
+      },
+      {
+        "nama": "Bahasa Inggris (pilihan)",
+        "semester1": ["Greetings", "Alphabet", "Numbers 1-10"],
+        "semester2": ["Colors", "My Family", "My Body"]
+      }
+    ]
+  },
+  "2": {
+    "nama": "Kelas 2 SD",
+    "mapel": [
+      {
+        "nama": "Pendidikan Agama dan Budi Pekerti",
+        "semester1": ["Asmaul Husna", "Hidup Bersih", "Sikap Jujur", "Hormat kepada Orang Tua"],
+        "semester2": ["Puasa", "Kisah Nabi", "Akhlak Mulia", "Berdoa"]
+      },
+      {
+        "nama": "Pendidikan Pancasila",
+        "semester1": ["Aturan di Sekolah", "Musyawarah", "Keberagaman"],
+        "semester2": ["Sikap Tolong Menolong", "Cinta Tanah Air", "Hak dan Kewajiban"]
+      },
+      {
+        "nama": "Bahasa Indonesia",
+        "semester1": ["Membaca Nyaring", "Menulis Kalimat", "Kata Benda dan Kata Sifat", "Ungkapan"],
+        "semester2": ["Cerita Rakyat", "Puisi Anak", "Membaca Pemahaman", "Menulis Paragraf"]
+      },
+      {
+        "nama": "Matematika",
+        "semester1": ["Bilangan 11-50", "Nilai Tempat", "Penjumlahan Bersusun", "Pengurangan Bersusun"],
+        "semester2": ["Jam dan Waktu", "Bangun Ruang Sederhana", "Perkalian Dasar", "Pembagian Dasar"]
+      },
+      {
+        "nama": "PJOK",
+        "semester1": ["Gerak Dasar Manipulatif", "Senam Lantai Sederhana", "Aktivitas Air"],
+        "semester2": ["Kebugaran Jasmani", "Hidup Sehat", "Permainan Bola Sederhana"]
+      },
+      {
+        "nama": "Seni dan Budaya",
+        "semester1": ["Menggambar Imajinatif", "Membuat Kolase", "Menyanyi dengan Alat Musik Sederhana"],
+        "semester2": ["Tari Kreasi", "Drama Sederhana", "Menggambar Perspektif"]
+      },
+      {
+        "nama": "Muatan Lokal",
+        "semester1": ["Bahasa Daerah", "Upacara Adat"],
+        "semester2": ["Kerajinan Tangan Lokal", "Permainan Tradisional"]
+      },
+      {
+        "nama": "Bahasa Inggris (pilihan)",
+        "semester1": ["My Body", "My School", "Toys"],
+        "semester2": ["Fruits", "Animals", "Daily Activities"]
+      }
+    ]
+  },
+  "3": {
+    "nama": "Kelas 3 SD",
+    "mapel": [
+      {
+        "nama": "Pendidikan Agama dan Budi Pekerti",
+        "semester1": ["Kitab Suci", "Ibadah Harian", "Akhlak Mulia", "Berdoa"],
+        "semester2": ["Kisah Teladan", "Hari Besar Keagamaan", "Toleransi", "Zakat"]
+      },
+      {
+        "nama": "Pendidikan Pancasila",
+        "semester1": ["Makna Pancasila", "Simbol-simbol Negara", "Kerja Sama"],
+        "semester2": ["Hak dan Kewajiban di Masyarakat", "Bhineka Tunggal Ika", "Cinta Produk Indonesia"]
+      },
+      {
+        "nama": "Bahasa Indonesia",
+        "semester1": ["Membaca Pemahaman", "Menulis Paragraf", "Kata Depan", "Sinonim Antonim"],
+        "semester2": ["Cerita Fabel", "Pantun", "Ide Pokok", "Kata Baku"]
+      },
+      {
+        "nama": "Matematika",
+        "semester1": ["Bilangan 51-100", "Perkalian Dasar", "Pembagian Dasar", "Pecahan Sederhana"],
+        "semester2": ["Pengukuran Panjang", "Bangun Datar dan Keliling", "Satuan Berat", "Uang"]
+      },
+      {
+        "nama": "Ilmu Pengetahuan Alam dan Sosial (IPAS)",
+        "semester1": ["Makhluk Hidup", "Siklus Air", "Wujud Benda", "Gaya dan Gerak"],
+        "semester2": ["Lingkungan Sekitar", "Pekerjaan", "Transportasi", "Keragaman Budaya"]
+      },
+      {
+        "nama": "PJOK",
+        "semester1": ["Kombinasi Gerak Dasar", "Aktivitas Ritmik", "Renang Gaya Bebas"],
+        "semester2": ["Kebugaran", "Pencegahan Penyakit", "Permainan Bola Kecil"]
+      },
+      {
+        "nama": "Seni dan Budaya",
+        "semester1": ["Menggambar Perspektif", "Membuat Patung Sederhana", "Membaca Notasi Musik"],
+        "semester2": ["Tari Daerah", "Bermain Peran", "Menyanyi Lagu Wajib"]
+      },
+      {
+        "nama": "Muatan Lokal",
+        "semester1": ["Cerita Rakyat", "Tarian Tradisional"],
+        "semester2": ["Makanan Khas", "Bahasa Daerah"]
+      },
+      {
+        "nama": "Bahasa Inggris (pilihan)",
+        "semester1": ["Time", "Daily Activities", "Food and Drink"],
+        "semester2": ["Clothes", "Weather", "My House"]
+      }
+    ]
+  },
+  "4": {
+    "nama": "Kelas 4 SD",
+    "mapel": [
+      {
+        "nama": "Pendidikan Agama dan Budi Pekerti",
+        "semester1": ["Iman kepada Malaikat", "Hidup Sederhana", "Zakat", "Kisah Nabi"],
+        "semester2": ["Toleransi", "Akhlak Terpuji", "Ibadah", "Muamalah"]
+      },
+      {
+        "nama": "Pendidikan Pancasila",
+        "semester1": ["Nilai-nilai Pancasila", "Peraturan Perundangan", "Hak Asasi Manusia"],
+        "semester2": ["Demokrasi", "Cinta Produk Indonesia", "Sistem Pemerintahan"]
+      },
+      {
+        "nama": "Bahasa Indonesia",
+        "semester1": ["Membaca Intensif", "Menulis Cerita", "Ide Pokok", "Kata Baku"],
+        "semester2": ["Surat", "Puisi Bebas", "Fakta dan Opini", "Kalimat Efektif"]
+      },
+      {
+        "nama": "Matematika",
+        "semester1": ["Bilangan Cacah Besar", "Faktor dan Kelipatan", "Bilangan Pecahan"],
+        "semester2": ["Bangun Datar (Luas)", "Satuan Baku", "Pengolahan Data Sederhana", "Sudut"]
+      },
+      {
+        "nama": "IPAS",
+        "semester1": ["Organ Tubuh Manusia", "Perkembangbiakan Tumbuhan", "Materi dan Perubahannya", "Sumber Energi"],
+        "semester2": ["Keragaman Suku Bangsa", "Peninggalan Sejarah", "Kegiatan Ekonomi", "Perkembangan Teknologi"]
+      },
+      {
+        "nama": "PJOK",
+        "semester1": ["Atletik (Lari, Lompat)", "Senam Lantai", "Renang"],
+        "semester2": ["Kebugaran", "Pola Makan Sehat", "Permainan Bola Besar"]
+      },
+      {
+        "nama": "Seni dan Budaya",
+        "semester1": ["Menggambar Ekspresi", "Membuat Karya Kerajinan", "Menyanyi Lagu Wajib"],
+        "semester2": ["Tari Kreasi", "Teater Tradisional", "Apresiasi Seni"]
+      },
+      {
+        "nama": "Muatan Lokal",
+        "semester1": ["Aksara Daerah", "Kesenian Daerah"],
+        "semester2": ["Permainan Tradisional", "Sejarah Lokal"]
+      },
+      {
+        "nama": "Bahasa Inggris (pilihan)",
+        "semester1": ["My House", "Hobbies", "Professions"],
+        "semester2": ["Transportation", "Public Places", "Telling Time"]
+      }
+    ]
+  },
+  "5": {
+    "nama": "Kelas 5 SD",
+    "mapel": [
+      {
+        "nama": "Pendidikan Agama dan Budi Pekerti",
+        "semester1": ["Iman kepada Kitab", "Akhlak Terpuji", "Sedekah", "Haji"],
+        "semester2": ["Menghormati Orang Tua", "Kisah Teladan", "Hidup Sederhana", "Berdoa"]
+      },
+      {
+        "nama": "Pendidikan Pancasila",
+        "semester1": ["Sistem Pemerintahan", "Lembaga Negara", "Hak dan Kewajiban Warga"],
+        "semester2": ["Kebebasan Berpendapat", "Persatuan", "Bhinneka Tunggal Ika"]
+      },
+      {
+        "nama": "Bahasa Indonesia",
+        "semester1": ["Membaca Cepat", "Menulis Laporan", "Fakta dan Opini", "Kalimat Efektif"],
+        "semester2": ["Iklan", "Prosa", "Membaca Kritis", "Menulis Artikel"]
+      },
+      {
+        "nama": "Matematika",
+        "semester1": ["Bilangan Bulat", "Operasi Hitung Campuran", "Pecahan dan Desimal", "Perbandingan"],
+        "semester2": ["Bangun Ruang (Volume)", "Koordinat", "Penyajian Data", "Skala"]
+      },
+      {
+        "nama": "IPAS",
+        "semester1": ["Sistem Pernapasan", "Ekosistem", "Rantai Makanan", "Perubahan Wujud Benda"],
+        "semester2": ["Listrik Sederhana", "Proklamasi Kemerdekaan", "Perekonomian Indonesia", "Globalisasi"]
+      },
+      {
+        "nama": "PJOK",
+        "semester1": ["Permainan Bola Besar", "Permainan Bola Kecil", "Aktivitas Senam"],
+        "semester2": ["Renang Gaya Punggung", "Kebugaran", "Bahaya Rokok"]
+      },
+      {
+        "nama": "Seni dan Budaya",
+        "semester1": ["Menggambar Bentuk", "Membuat Kriya", "Bermain Alat Musik"],
+        "semester2": ["Tari Nusantara", "Drama Modern", "Pertunjukan Musik"]
+      },
+      {
+        "nama": "Muatan Lokal",
+        "semester1": ["Sejarah Lokal", "Kerajinan Khas"],
+        "semester2": ["Kuliner Daerah", "Budaya Daerah"]
+      },
+      {
+        "nama": "Bahasa Inggris (pilihan)",
+        "semester1": ["Holidays", "Around the Town", "Telling Time"],
+        "semester2": ["Descriptions", "Simple Past Tense", "Future Plans"]
+      }
+    ]
+  },
+  "6": {
+    "nama": "Kelas 6 SD",
+    "mapel": [
+      {
+        "nama": "Pendidikan Agama dan Budi Pekerti",
+        "semester1": ["Iman kepada Qada dan Qadar", "Kiamat", "Dakwah", "Perilaku Terpuji"],
+        "semester2": ["Toleransi Beragama", "Kisah Nabi", "Ibadah", "Muamalah"]
+      },
+      {
+        "nama": "Pendidikan Pancasila",
+        "semester1": ["Pancasila sebagai Dasar Negara", "Konstitusi", "Hukum"],
+        "semester2": ["Hak Asasi Manusia", "Persatuan dan Kesatuan", "Demokrasi"]
+      },
+      {
+        "nama": "Bahasa Indonesia",
+        "semester1": ["Membaca Kritis", "Menulis Artikel", "Ringkasan", "Kesimpulan"],
+        "semester2": ["Surat Resmi", "Cerita Pendek", "Menulis Cerita", "Puisi"]
+      },
+      {
+        "nama": "Matematika",
+        "semester1": ["Bilangan Bulat Negatif", "Operasi Hitung Campuran", "Faktor Persekutuan", "Kelipatan Persekutuan"],
+        "semester2": ["Bangun Ruang (Jaring-jaring)", "Statistika", "Peluang", "Pengolahan Data"]
+      },
+      {
+        "nama": "IPAS",
+        "semester1": ["Sistem Peredaran Darah", "Perkembangbiakan Manusia", "Tata Surya", "Perubahan Lingkungan"],
+        "semester2": ["Perjuangan Mempertahankan Kemerdekaan", "ASEAN", "Modernisasi", "Globalisasi"]
+      },
+      {
+        "nama": "PJOK",
+        "semester1": ["Permainan Bola Besar (Lanjutan)", "Atletik", "Senam"],
+        "semester2": ["Renang", "Kebugaran", "Pertolongan Pertama"]
+      },
+      {
+        "nama": "Seni dan Budaya",
+        "semester1": ["Apresiasi Seni", "Membuat Karya Seni", "Pertunjukan Musik"],
+        "semester2": ["Tari Kreatif", "Drama Kolaborasi", "Menggambar Ekspresi"]
+      },
+      {
+        "nama": "Muatan Lokal",
+        "semester1": ["Budaya Daerah", "Kearifan Lokal"],
+        "semester2": ["Pariwisata Daerah", "Adat Istiadat"]
+      },
+      {
+        "nama": "Bahasa Inggris (pilihan)",
+        "semester1": ["Narrative Text", "Recount Text", "Invitation"],
+        "semester2": ["Passive Voice", "Future Plans", "Simple Past Tense"]
+      }
+    ]
+  },
+  "7": {
+    "nama": "Kelas 7 SMP",
+    "mapel": [
+      {
+        "nama": "Pendidikan Agama dan Budi Pekerti",
+        "semester1": ["Iman kepada Allah", "Akhlak", "Ibadah", "Muamalah"],
+        "semester2": ["Sejarah Peradaban Islam", "Kisah Nabi", "Hidup Sehat", "Toleransi"]
+      },
+      {
+        "nama": "Pendidikan Pancasila",
+        "semester1": ["Sejarah Pancasila", "Norma", "Undang-Undang Dasar 1945"],
+        "semester2": ["Bhinneka Tunggal Ika", "Negara Kesatuan RI", "Hak dan Kewajiban"]
+      },
+      {
+        "nama": "Bahasa Indonesia",
+        "semester1": ["Teks Deskripsi", "Teks Cerita Fantasi", "Teks Prosedur"],
+        "semester2": ["Teks Laporan Hasil Observasi", "Puisi Rakyat", "Fabel"]
+      },
+      {
+        "nama": "Matematika",
+        "semester1": ["Bilangan Bulat dan Pecahan", "Himpunan", "Aljabar", "Persamaan Linear"],
+        "semester2": ["Perbandingan", "Aritmetika Sosial", "Garis dan Sudut", "Segiempat dan Segitiga", "Penyajian Data"]
+      },
+      {
+        "nama": "Ilmu Pengetahuan Alam (IPA)",
+        "semester1": ["Besaran dan Pengukuran", "Klasifikasi Makhluk Hidup", "Zat dan Karakteristiknya"],
+        "semester2": ["Suhu dan Kalor", "Energi", "Sistem Organisasi Kehidupan", "Ekosistem", "Pencemaran Lingkungan"]
+      },
+      {
+        "nama": "Ilmu Pengetahuan Sosial (IPS)",
+        "semester1": ["Ruang dan Interaksi", "Keadaan Alam Indonesia", "Peninggalan Sejarah", "Masa Praaksara"],
+        "semester2": ["Kerajaan Hindu-Buddha", "Kerajaan Islam", "Kegiatan Ekonomi", "Permintaan dan Penawaran"]
+      },
+      {
+        "nama": "Bahasa Inggris",
+        "semester1": ["Greetings", "Introducing Self", "Telling Time", "Daily Routines"],
+        "semester2": ["Descriptions (People, Animals)", "Simple Present Tense", "Pronouns", "Simple Past Tense"]
+      },
+      {
+        "nama": "PJOK",
+        "semester1": ["Permainan Bola Besar", "Permainan Bola Kecil", "Atletik", "Senam"],
+        "semester2": ["Aktivitas Ritmik", "Renang", "Kebugaran", "Pertumbuhan Remaja"]
+      },
+      {
+        "nama": "Informatika",
+        "semester1": ["Berpikir Komputasional", "Teknologi Informasi", "Sistem Komputer"],
+        "semester2": ["Jaringan Internet", "Analisis Data", "Algoritma Pemrograman", "Dampak Sosial Informatika"]
+      },
+      {
+        "nama": "Seni dan Prakarya (Musik/Rupa/Teater/Tari/Prakarya)",
+        "semester1": ["Seni Rupa: Menggambar", "Seni Musik: Notasi", "Seni Tari: Gerak Dasar"],
+        "semester2": ["Seni Teater: Improvisasi", "Prakarya: Kerajinan", "Prakarya: Rekayasa"]
+      },
+      {
+        "nama": "Muatan Lokal",
+        "semester1": ["Bahasa Daerah", "Adat Istiadat"],
+        "semester2": ["Kesenian Daerah", "Keterampilan Lokal"]
+      }
+    ]
+  },
+  "8": {
+    "nama": "Kelas 8 SMP",
+    "mapel": [
+      {
+        "nama": "Pendidikan Agama dan Budi Pekerti",
+        "semester1": ["Iman kepada Kitab", "Akhlak", "Ibadah", "Muamalah"],
+        "semester2": ["Sejarah Nabi", "Hidup Sehat", "Toleransi", "Akhlak Terpuji"]
+      },
+      {
+        "nama": "Pendidikan Pancasila",
+        "semester1": ["Ideologi Pancasila", "Konstitusi", "Lembaga Negara"],
+        "semester2": ["Demokrasi", "Hak Asasi Manusia", "Persatuan"]
+      },
+      {
+        "nama": "Bahasa Indonesia",
+        "semester1": ["Teks Berita", "Teks Iklan", "Teks Eksposisi"],
+        "semester2": ["Teks Puisi", "Teks Drama", "Buku Fiksi dan Nonfiksi"]
+      },
+      {
+        "nama": "Matematika",
+        "semester1": ["Pola Bilangan", "Koordinat Kartesius", "Relasi dan Fungsi", "Persamaan Garis Lurus"],
+        "semester2": ["Sistem Persamaan Linear Dua Variabel", "Teorema Pythagoras", "Lingkaran", "Bangun Ruang Sisi Datar", "Statistika"]
+      },
+      {
+        "nama": "IPA",
+        "semester1": ["Gerak Benda", "Pesawat Sederhana", "Struktur dan Fungsi Tumbuhan", "Sistem Pencernaan Manusia"],
+        "semester2": ["Zat Aditif dan Adiktif", "Sistem Peredaran Darah", "Tekanan Zat", "Getaran dan Gelombang", "Cahaya dan Alat Optik"]
+      },
+      {
+        "nama": "IPS",
+        "semester1": ["Interaksi Keruangan", "Lembaga Sosial", "Keunggulan dan Keterbatasan Antarruang"],
+        "semester2": ["Masa Kolonial", "Pergerakan Nasional", "Perdagangan Internasional", "Ketenagakerjaan"]
+      },
+      {
+        "nama": "Bahasa Inggris",
+        "semester1": ["Asking and Giving Opinion", "Obligations", "Prohibition", "Recount Text"],
+        "semester2": ["Narrative Text", "Simple Past Tense", "Present Continuous Tense", "Degrees of Comparison"]
+      },
+      {
+        "nama": "PJOK",
+        "semester1": ["Permainan Bola Besar (Lanjutan)", "Permainan Bola Kecil (Lanjutan)", "Atletik (Lompat Jauh)", "Senam Lantai"],
+        "semester2": ["Renang", "Kebugaran", "Pola Hidup Sehat", "Pencegahan Pergaulan Bebas"]
+      },
+      {
+        "nama": "Informatika",
+        "semester1": ["Berpikir Komputasional", "Teknologi Informasi", "Sistem Komputer"],
+        "semester2": ["Jaringan Komputer", "Analisis Data", "Pemrograman Dasar", "Dampak Sosial"]
+      },
+      {
+        "nama": "Seni dan Prakarya",
+        "semester1": ["Seni Rupa: Desain", "Seni Musik: Lagu Daerah", "Seni Tari: Tari Kreasi"],
+        "semester2": ["Seni Teater: Naskah", "Prakarya: Budidaya", "Prakarya: Pengolahan"]
+      },
+      {
+        "nama": "Muatan Lokal",
+        "semester1": ["Bahasa Daerah", "Sejarah Lokal"],
+        "semester2": ["Keterampilan Daerah", "Adat Istiadat"]
+      }
+    ]
+  },
+  "9": {
+    "nama": "Kelas 9 SMP",
+    "mapel": [
+      {
+        "nama": "Pendidikan Agama dan Budi Pekerti",
+        "semester1": ["Iman kepada Hari Akhir", "Akhlak", "Ibadah", "Muamalah"],
+        "semester2": ["Sejarah Peradaban Islam", "Kisah Nabi", "Toleransi", "Hidup Sehat"]
+      },
+      {
+        "nama": "Pendidikan Pancasila",
+        "semester1": ["Pancasila dalam Praktik", "Hukum dan Peradilan", "Hak dan Kewajiban"],
+        "semester2": ["Persatuan", "Ancaman terhadap Negara", "Demokrasi"]
+      },
+      {
+        "nama": "Bahasa Indonesia",
+        "semester1": ["Teks Pidato", "Teks Diskusi", "Teks Cerita Inspiratif"],
+        "semester2": ["Novel", "Kritik dan Esai", "Karya Ilmiah Sederhana"]
+      },
+      {
+        "nama": "Matematika",
+        "semester1": ["Bilangan Berpangkat", "Bentuk Akar", "Persamaan Kuadrat", "Transformasi Geometri"],
+        "semester2": ["Kesebangunan dan Kekongruenan", "Bangun Ruang Sisi Lengkung", "Peluang", "Statistika (Lanjutan)"]
+      },
+      {
+        "nama": "IPA",
+        "semester1": ["Sistem Reproduksi Manusia", "Sistem Koordinasi", "Listrik Statis", "Listrik Dinamis"],
+        "semester2": ["Kemagnetan", "Bioteknologi", "Tanah dan Keberlangsungan Kehidupan", "Teknologi Ramah Lingkungan"]
+      },
+      {
+        "nama": "IPS",
+        "semester1": ["Perubahan Sosial", "Globalisasi", "Pasar Bebas"],
+        "semester2": ["Masa Kemerdekaan", "Masa Orde Baru", "Masa Reformasi", "Kerjasama Internasional"]
+      },
+      {
+        "nama": "Bahasa Inggris",
+        "semester1": ["Present Perfect Tense", "Passive Voice", "Conditional Sentence"],
+        "semester2": ["Report Text", "Analytical Exposition", "Song", "Procedure Text"]
+      },
+      {
+        "nama": "PJOK",
+        "semester1": ["Permainan Bola Besar (Taktik)", "Permainan Bola Kecil (Taktik)", "Atletik", "Senam"],
+        "semester2": ["Renang", "Kebugaran", "Keselamatan di Jalan Raya", "Bahaya Narkoba"]
+      },
+      {
+        "nama": "Informatika",
+        "semester1": ["Berpikir Komputasional", "Teknologi Informasi", "Sistem Komputer"],
+        "semester2": ["Jaringan", "Analisis Data", "Pemrograman Lanjut", "Dampak Sosial"]
+      },
+      {
+        "nama": "Seni dan Prakarya",
+        "semester1": ["Seni Rupa: Pameran", "Seni Musik: Apresiasi", "Seni Tari: Koreografi"],
+        "semester2": ["Seni Teater: Pementasan", "Prakarya: Produk Kreatif", "Prakarya: Kerajinan"]
+      },
+      {
+        "nama": "Muatan Lokal",
+        "semester1": ["Bahasa Daerah", "Adat Istiadat"],
+        "semester2": ["Kearifan Lokal", "Sejarah Lokal"]
+      }
+    ]
+  },
+  "10": {
+    "nama": "Kelas 10 SMA",
+    "mapel": [
+      {
+        "nama": "Pendidikan Agama dan Budi Pekerti",
+        "semester1": ["Iman kepada Allah", "Akhlak", "Ibadah", "Muamalah"],
+        "semester2": ["Sejarah Peradaban Islam", "Kisah Nabi", "Toleransi", "Hidup Sehat"]
+      },
+      {
+        "nama": "Pendidikan Pancasila",
+        "semester1": ["Pancasila sebagai Ideologi", "Konstitusi", "Hak dan Kewajiban"],
+        "semester2": ["Demokrasi", "Negara Hukum", "Persatuan"]
+      },
+      {
+        "nama": "Bahasa Indonesia",
+        "semester1": ["Teks Laporan Hasil Observasi", "Teks Eksposisi", "Teks Anekdot"],
+        "semester2": ["Teks Cerita Rakyat", "Teks Negosiasi", "Debat", "Biografi", "Puisi", "Cerpen"]
+      },
+      {
+        "nama": "Matematika",
+        "semester1": ["Eksponen dan Logaritma", "Nilai Mutlak", "Sistem Persamaan Linear Tiga Variabel"],
+        "semester2": ["Fungsi Kuadrat", "Trigonometri (Perbandingan, Identitas)", "Vektor", "Peluang", "Statistika", "Lingkaran"]
+      },
+      {
+        "nama": "Ilmu Pengetahuan Alam dan Sosial (IPAS)",
+        "semester1": ["Pengukuran", "Hukum Dasar Kimia", "Energi Terbarukan", "Keanekaragaman Hayati"],
+        "semester2": ["Pemanasan Global", "Lapisan Bumi", "Interaksi Sosial", "Lembaga Sosial", "Sejarah Indonesia (Masa Praaksara, Hindu-Buddha, Islam)"]
+      },
+      {
+        "nama": "PJOK",
+        "semester1": ["Permainan Bola Besar", "Permainan Bola Kecil", "Atletik", "Senam"],
+        "semester2": ["Aktivitas Ritmik", "Renang", "Kebugaran", "Pertolongan Pertama", "Kesehatan Reproduksi"]
+      },
+      {
+        "nama": "Sejarah Indonesia",
+        "semester1": ["Masa Praaksara", "Masa Hindu-Buddha", "Masa Kerajaan Islam"],
+        "semester2": ["Masa Kolonial", "Pergerakan Nasional", "Proklamasi"]
+      },
+      {
+        "nama": "Bahasa Inggris",
+        "semester1": ["Teks Deskriptif", "Teks Prosedur", "Teks Recount"],
+        "semester2": ["Narrative Text", "Simple Past vs Present Perfect", "Expressions: Introduction, Congratulation, Compliment"]
+      },
+      {
+        "nama": "Seni dan Prakarya",
+        "semester1": ["Seni Rupa: Apresiasi", "Seni Musik: Apresiasi", "Seni Tari: Apresiasi"],
+        "semester2": ["Seni Teater: Apresiasi", "Prakarya: Kerajinan", "Prakarya: Rekayasa", "Prakarya: Budidaya", "Prakarya: Pengolahan"]
+      },
+      {
+        "nama": "Muatan Lokal",
+        "semester1": ["Bahasa Daerah", "Budaya Daerah"],
+        "semester2": ["Keterampilan Daerah", "Adat Istiadat"]
+      }
+    ]
+  },
+  "11": {
+    "nama": "Kelas 11 SMA",
+    "mapel": [
+      {
+        "nama": "Pendidikan Agama dan Budi Pekerti (Wajib)",
+        "semester1": ["Iman kepada Kitab", "Akhlak", "Ibadah", "Muamalah"],
+        "semester2": ["Sejarah", "Toleransi", "Hidup Sehat", "Akhlak Terpuji"]
+      },
+      {
+        "nama": "Pendidikan Pancasila (Wajib)",
+        "semester1": ["Sistem Pemerintahan", "Lembaga Peradilan", "Hak Asasi"],
+        "semester2": ["Wawasan Nusantara", "Ketahanan Nasional", "Persatuan"]
+      },
+      {
+        "nama": "Bahasa Indonesia (Wajib)",
+        "semester1": ["Teks Prosedur", "Teks Eksplanasi", "Teks Ceramah"],
+        "semester2": ["Karya Ilmiah", "Resensi", "Novel"]
+      },
+      {
+        "nama": "Matematika (Wajib)",
+        "semester1": ["Program Linear", "Matriks", "Fungsi Komposisi dan Invers"],
+        "semester2": ["Barisan dan Deret", "Limit Fungsi", "Turunan Fungsi", "Integral"]
+      },
+      {
+        "nama": "PJOK (Wajib)",
+        "semester1": ["Permainan Bola Besar (Taktik)", "Permainan Bola Kecil (Taktik)", "Atletik", "Senam"],
+        "semester2": ["Renang", "Kebugaran", "Gizi", "Pencegahan Narkoba"]
+      },
+      {
+        "nama": "Sejarah Indonesia (Wajib)",
+        "semester1": ["Masa Pendudukan Jepang", "Proklamasi", "Perjuangan Mempertahankan Kemerdekaan"],
+        "semester2": ["Masa Demokrasi Liberal", "Masa Demokrasi Terpimpin", "Masa Orde Baru", "Masa Reformasi"]
+      },
+      {
+        "nama": "Bahasa Inggris (Wajib)",
+        "semester1": ["Teks Eksposisi Analitis", "Teks Diskusi", "Explanation Text"],
+        "semester2": ["Passive Voice", "Conditional Sentence", "Relative Clause"]
+      },
+      {
+        "nama": "Matematika Tingkat Lanjut (Pilihan MIPA)",
+        "semester1": ["Polinomial", "Matriks Lanjut", "Fungsi Trigonometri"],
+        "semester2": ["Limit Trigonometri", "Turunan Trigonometri", "Integral Lanjut", "Statistika Inferensi"]
+      },
+      {
+        "nama": "Fisika (Pilihan MIPA)",
+        "semester1": ["Kinematika", "Dinamika", "Usaha dan Energi", "Momentum"],
+        "semester2": ["Getaran Harmonis", "Fluida Statis", "Suhu dan Kalor", "Termodinamika", "Gelombang Mekanik"]
+      },
+      {
+        "nama": "Kimia (Pilihan MIPA)",
+        "semester1": ["Hukum Dasar Kimia", "Stoikiometri", "Ikatan Kimia", "Termokimia"],
+        "semester2": ["Laju Reaksi", "Kesetimbangan Kimia", "Larutan Asam Basa", "Hidrolisis Garam", "Larutan Penyangga"]
+      },
+      {
+        "nama": "Biologi (Pilihan MIPA)",
+        "semester1": ["Sel", "Jaringan Tumbuhan", "Jaringan Hewan", "Sistem Gerak"],
+        "semester2": ["Sistem Peredaran Darah", "Sistem Pencernaan", "Sistem Pernapasan", "Sistem Ekskresi", "Sistem Koordinasi"]
+      },
+      {
+        "nama": "Informatika (Pilihan MIPA)",
+        "semester1": ["Berpikir Komputasional", "Algoritma Pemrograman", "Struktur Data"],
+        "semester2": ["Pengembangan Aplikasi", "Dampak Sosial", "Keamanan Siber"]
+      },
+      {
+        "nama": "Ekonomi (Pilihan IPS)",
+        "semester1": ["Konsep Dasar Ekonomi", "Permintaan dan Penawaran", "Pasar", "Bank"],
+        "semester2": ["Kebijakan Moneter", "Kebijakan Fiskal", "APBN", "Pajak", "Perdagangan Internasional"]
+      },
+      {
+        "nama": "Sosiologi (Pilihan IPS)",
+        "semester1": ["Fungsi Sosiologi", "Interaksi Sosial", "Sosialisasi", "Nilai dan Norma"],
+        "semester2": ["Perilaku Menyimpang", "Pengendalian Sosial", "Stratifikasi Sosial", "Konflik dan Integrasi"]
+      },
+      {
+        "nama": "Geografi (Pilihan IPS)",
+        "semester1": ["Konsep Geografi", "Peta", "Litosfer", "Pedosfer"],
+        "semester2": ["Atmosfer", "Hidrosfer", "Biosfer", "Sumber Daya Alam", "Lingkungan Hidup"]
+      },
+      {
+        "nama": "Antropologi (Pilihan IPS)",
+        "semester1": ["Konsep Antropologi", "Kebudayaan", "Sistem Religi", "Bahasa"],
+        "semester2": ["Kesenian", "Etnografi", "Perubahan Budaya"]
+      },
+      {
+        "nama": "Bahasa dan Sastra Indonesia (Pilihan Bahasa)",
+        "semester1": ["Linguistik", "Sastra", "Apresiasi Puisi", "Apresiasi Prosa"],
+        "semester2": ["Drama", "Kritik Sastra", "Apresiasi Novel"]
+      },
+      {
+        "nama": "Bahasa Jawa (Pilihan Bahasa)",
+        "semester1": ["Aksara Jawa", "Unggah-ungguh", "Teks Cerita"],
+        "semester2": ["Wayang", "Tembang", "Paramasastra"]
+      },
+      {
+        "nama": "Bahasa Mandarin (Pilihan Bahasa)",
+        "semester1": ["Hanzi", "Tata Bahasa", "Membaca"],
+        "semester2": ["Menulis", "Percakapan", "Membaca Teks"]
+      },
+      {
+        "nama": "Bahasa Jepang (Pilihan Bahasa)",
+        "semester1": ["Hiragana", "Katakana", "Kanji Dasar"],
+        "semester2": ["Tata Bahasa", "Membaca", "Percakapan"]
+      },
+      {
+        "nama": "Bahasa Jerman (Pilihan Bahasa)",
+        "semester1": ["Alfabet", "Tata Bahasa Dasar", "Membaca"],
+        "semester2": ["Menulis", "Percakapan", "Budaya Jerman"]
+      },
+      {
+        "nama": "Prakarya dan Kewirausahaan (Pilihan Vokasi)",
+        "semester1": ["Kerajinan", "Rekayasa", "Budidaya"],
+        "semester2": ["Pengolahan", "Perencanaan Usaha", "Pemasaran"]
+      },
+      {
+        "nama": "Muatan Lokal",
+        "semester1": ["Bahasa Daerah", "Adat Istiadat"],
+        "semester2": ["Keterampilan Lokal", "Budaya Daerah"]
+      }
+    ]
+  },
+  "12": {
+    "nama": "Kelas 12 SMA",
+    "mapel": [
+      {
+        "nama": "Pendidikan Agama dan Budi Pekerti (Wajib)",
+        "semester1": ["Iman kepada Qada dan Qadar", "Akhlak", "Ibadah", "Muamalah"],
+        "semester2": ["Sejarah Peradaban Islam", "Toleransi", "Hidup Sehat", "Kisah Nabi"]
+      },
+      {
+        "nama": "Pendidikan Pancasila (Wajib)",
+        "semester1": ["Dinamika Pancasila", "Hukum Internasional", "Hak Asasi Manusia"],
+        "semester2": ["Persatuan", "Ancaman Global", "Wawasan Nusantara"]
+      },
+      {
+        "nama": "Bahasa Indonesia (Wajib)",
+        "semester1": ["Surat Lamaran Pekerjaan", "Teks Editorial", "Novel"],
+        "semester2": ["Kritik dan Esai", "Karya Tulis Ilmiah", "Resensi"]
+      },
+      {
+        "nama": "Matematika (Wajib)",
+        "semester1": ["Statistika Lanjut", "Peluang Lanjut", "Turunan Fungsi Trigonometri"],
+        "semester2": ["Aplikasi Turunan", "Integral Lanjut", "Matriks Transformasi"]
+      },
+      {
+        "nama": "PJOK (Wajib)",
+        "semester1": ["Permainan Bola Besar (Strategi)", "Permainan Bola Kecil (Strategi)", "Atletik", "Senam"],
+        "semester2": ["Renang", "Kebugaran", "Manajemen Kesehatan", "Pencegahan Narkoba"]
+      },
+      {
+        "nama": "Sejarah Indonesia (Wajib)",
+        "semester1": ["Perkembangan Politik Masa Reformasi", "Perkembangan Ekonomi"],
+        "semester2": ["Perkembangan Sosial Budaya", "Indonesia dalam Perdamaian Dunia"]
+      },
+      {
+        "nama": "Bahasa Inggris (Wajib)",
+        "semester1": ["Teks News Item", "Teks Explanation", "Teks Review"],
+        "semester2": ["Passive Voice", "Conditional Sentence", "Reported Speech"]
+      },
+      {
+        "nama": "Matematika Tingkat Lanjut (Pilihan MIPA)",
+        "semester1": ["Limit Lanjut", "Turunan Lanjut", "Integral Lanjut"],
+        "semester2": ["Aplikasi Turunan", "Aplikasi Integral", "Persamaan Diferensial", "Geometri Analitik"]
+      },
+      {
+        "nama": "Fisika (Pilihan MIPA)",
+        "semester1": ["Listrik Statis", "Listrik Dinamis", "Medan Magnet", "Induksi Elektromagnetik"],
+        "semester2": ["Rangkaian AC", "Fisika Modern", "Radioaktivitas", "Fisika Inti"]
+      },
+      {
+        "nama": "Kimia (Pilihan MIPA)",
+        "semester1": ["Kelarutan dan Hasil Kali Kelarutan", "Koloid", "Kimia Unsur", "Senyawa Organik"],
+        "semester2": ["Makromolekul", "Elektrokimia", "Korosi", "Kimia Terapan"]
+      },
+      {
+        "nama": "Biologi (Pilihan MIPA)",
+        "semester1": ["Metabolisme", "Genetika", "Evolusi", "Bioteknologi"],
+        "semester2": ["Mikrobiologi", "Imunologi", "Teknologi DNA", "Biologi Molekuler"]
+      },
+      {
+        "nama": "Informatika (Pilihan MIPA)",
+        "semester1": ["Kecerdasan Buatan", "Machine Learning", "Big Data"],
+        "semester2": ["Internet of Things", "Keamanan Jaringan", "Pengembangan Aplikasi Lanjut"]
+      },
+      {
+        "nama": "Ekonomi (Pilihan IPS)",
+        "semester1": ["Akuntansi Perusahaan Jasa", "Akuntansi Perusahaan Dagang", "Manajemen"],
+        "semester2": ["Koperasi", "Perekonomian Terbuka", "Neraca Pembayaran", "Kurs Valas"]
+      },
+      {
+        "nama": "Sosiologi (Pilihan IPS)",
+        "semester1": ["Perubahan Sosial", "Lembaga Sosial", "Penelitian Sosial"],
+        "semester2": ["Globalisasi", "Masyarakat Multikultural", "Integrasi Sosial"]
+      },
+      {
+        "nama": "Geografi (Pilihan IPS)",
+        "semester1": ["Konsep Wilayah", "Perwilayahan", "Pembangunan"],
+        "semester2": ["Peta Tematik", "Sistem Informasi Geografis", "Mitigasi Bencana"]
+      },
+      {
+        "nama": "Antropologi (Pilihan IPS)",
+        "semester1": ["Antropologi Forensik", "Antropologi Kesehatan", "Antropologi Urban"],
+        "semester2": ["Etnisitas", "Dinamika Kebudayaan", "Globalisasi Budaya"]
+      },
+      {
+        "nama": "Bahasa dan Sastra Indonesia (Pilihan Bahasa)",
+        "semester1": ["Fonologi", "Morfologi", "Sintaksis"],
+        "semester2": ["Semantik", "Sastra Banding", "Kritik Sastra Lanjut"]
+      },
+      {
+        "nama": "Bahasa Jawa (Pilihan Bahasa)",
+        "semester1": ["Paramasastra", "Kasusastraan Jawa", "Naskah Kuno"],
+        "semester2": ["Upacara Adat", "Filsafat Jawa", "Wayang Kulit"]
+      },
+      {
+        "nama": "Bahasa Mandarin (Pilihan Bahasa)",
+        "semester1": ["Hanzi Lanjut", "Tata Bahasa Lanjut", "Membaca Teks Otentik"],
+        "semester2": ["Menulis Esai", "Percakapan Formal", "Terjemahan"]
+      },
+      {
+        "nama": "Bahasa Jepang (Pilihan Bahasa)",
+        "semester1": ["Kanji Lanjut", "Tata Bahasa Lanjut", "Membaca Teks"],
+        "semester2": ["Menulis", "Percakapan Formal", "Budaya Jepang"]
+      },
+      {
+        "nama": "Bahasa Jerman (Pilihan Bahasa)",
+        "semester1": ["Tata Bahasa Lanjut", "Membaca Teks", "Menulis Surat"],
+        "semester2": ["Percakapan Formal", "Budaya Jerman", "Sastra Jerman"]
+      },
+      {
+        "nama": "Prakarya dan Kewirausahaan (Pilihan Vokasi)",
+        "semester1": ["Perencanaan Bisnis", "Produksi Massal", "Manajemen Usaha"],
+        "semester2": ["Pemasaran Digital", "Laporan Keuangan", "Evaluasi Usaha"]
+      },
+      {
+        "nama": "Muatan Lokal",
+        "semester1": ["Bahasa Daerah", "Budaya Daerah"],
+        "semester2": ["Keterampilan Daerah", "Adat Istiadat"]
+      }
+    ]
+  }
 };
 
+// ========== DATA UNTUK OSN DAN TKA (tetap) ==========
 const mapelByOSNLevel = {
     'SD': ['Matematika', 'Ilmu Pengetahuan Alam (IPA)'],
     'SMP': ['Matematika', 'Ilmu Pengetahuan Alam (IPA)', 'Ilmu Pengetahuan Sosial (IPS)'],
     'SMA': ['Matematika', 'Fisika', 'Kimia', 'Biologi', 'Informatika/Komputer', 'Astronomi', 'Ekonomi', 'Kebumian', 'Geografi']
 };
 
-const materiKurikulumMerdeka = {
-    'SD-Matematika': {
-        '1': ['Bilangan 1-10', 'Penjumlahan dan Pengurangan', 'Mengukur Panjang', 'Mengenal Waktu'],
-        '2': ['Bilangan 1-100', 'Perkalian', 'Pembagian', 'Uang', 'Geometri Dasar'],
-        '3': ['Bilangan Cacah', 'Pecahan Sederhana', 'Bangun Datar', 'Keliling dan Luas'],
-        '4': ['Faktor dan Kelipatan', 'Pecahan', 'Desimal', 'Bangun Ruang Sederhana'],
-        '5': ['Operasi Hitung Pecahan', 'Kecepatan dan Debit', 'Volume Bangun Ruang', 'Koordinat'],
-        '6': ['Bilangan Bulat', 'Rasio', 'Lingkaran', 'Statistika Dasar']
-    },
-    'SD-IPA': {
-        '1': ['Tubuhku', 'Hewan di Sekitarku', 'Tumbuhan di Sekitarku', 'Benda di Sekitarku'],
-        '2': ['Hewan dan Tumbuhan', 'Siklus Hidup', 'Cuaca', 'Energi'],
-        '3': ['Cahaya dan Bunyi', 'Gaya dan Gerak', 'Rantai Makanan', 'Pelestarian Lingkungan'],
-        '4': ['Bagian Tubuh Tumbuhan', 'Perkembangbiakan Hewan', 'Sumber Energi', 'Perubahan Lingkungan'],
-        '5': ['Sistem Pernapasan', 'Sistem Pencernaan', 'Sistem Peredaran Darah', 'Gaya Magnet'],
-        '6': ['Sistem Tata Surya', 'Perkembangbiakan Tumbuhan', 'Listrik', 'Perubahan Fisika dan Kimia']
-    },
-    'SD-Bahasa Indonesia': {
-        '1': ['Membaca Permulaan', 'Menulis Permulaan', 'Kosakata Baru', 'Puisi Sederhana'],
-        '2': ['Membaca Cerita', 'Menulis Kalimat', 'Dongeng', 'Percakapan'],
-        '3': ['Ide Pokok', 'Kata Depan', 'Surat', 'Pengumuman'],
-        '4': ['Kalimat Efektif', 'Paragraf', 'Cerita Rakyat', 'Iklan'],
-        '5': ['Teks Eksplanasi', 'Teks Prosedur', 'Teks Deskripsi', 'Puisi'],
-        '6': ['Teks Pidato', 'Teks Berita', 'Teks Eksposisi', 'Karya Ilmiah Sederhana']
-    },
-    'SD-Bahasa Inggris': {
-        '1': ['Greetings', 'Alphabet', 'Numbers 1-10', 'Colors'],
-        '2': ['Family', 'Parts of Body', 'Daily Activities', 'Food'],
-        '3': ['Time', 'Days and Months', 'Hobbies', 'Animals'],
-        '4': ['Adjectives', 'Simple Present', 'Prepositions', 'Weather'],
-        '5': ['Simple Past', 'Asking Direction', 'Shopping', 'Holiday'],
-        '6': ['Future Plan', 'Descriptive Text', 'Procedure Text', 'Narrative Text']
-    },
-    'SMP-Matematika': {
-        '7': ['Bilangan Bulat', 'Himpunan', 'Aljabar', 'Persamaan Linear', 'Perbandingan', 'Aritmetika Sosial', 'Garis dan Sudut', 'Segiempat dan Segitiga', 'Penyajian Data'],
-        '8': ['Pola Bilangan', 'Koordinat Kartesius', 'Relasi dan Fungsi', 'Persamaan Garis Lurus', 'SPLDV', 'Teorema Pythagoras', 'Lingkaran', 'Bangun Ruang Sisi Datar', 'Statistika'],
-        '9': ['Perpangkatan', 'Bentuk Akar', 'Persamaan Kuadrat', 'Transformasi', 'Kekongruenan', 'Kesebangunan', 'Bangun Ruang Sisi Lengkung', 'Peluang']
-    },
-    'SMP-IPA': {
-        '7': ['Objek IPA', 'Klasifikasi Makhluk Hidup', 'Klasifikasi Materi', 'Suhu dan Kalor', 'Energi', 'Tata Surya'],
-        '8': ['Gerak Benda', 'Pesawat Sederhana', 'Struktur Tumbuhan', 'Sistem Pencernaan', 'Zat Aditif', 'Getaran dan Gelombang'],
-        '9': ['Sistem Reproduksi', 'Sistem Koordinasi', 'Perkembangbiakan', 'Listrik Statis', 'Listrik Dinamis', 'Kemagnetan']
-    },
-    'SMP-IPS': {
-        '7': ['Ruang dan Interaksi', 'Kehidupan Masa Praaksara', 'Kegiatan Ekonomi', 'Lembaga Sosial'],
-        '8': ['Kondisi Geografis Indonesia', 'Mobilitas Sosial', 'Perdagangan Antarnegara', 'Kolonialisme'],
-        '9': ['Globalisasi', 'Pasar Bebas', 'Ketergantungan Antarruang', 'Perubahan Sosial']
-    },
-    'SMP-Bahasa Indonesia': {
-        '7': ['Teks Deskripsi', 'Teks Narasi', 'Teks Prosedur', 'Teks Laporan', 'Puisi Rakyat', 'Fabel'],
-        '8': ['Teks Eksposisi', 'Teks Persuasi', 'Drama', 'Iklan', 'Slogan', 'Poster'],
-        '9': ['Teks Tanggapan', 'Teks Diskusi', 'Cerita Inspiratif', 'Karya Ilmiah', 'Resensi']
-    },
-    'SMP-Bahasa Inggris': {
-        '7': ['Greetings & Introductions', 'Descriptive Text', 'Procedure Text', 'Recount Text'],
-        '8': ['Narrative Text', 'Simple Present vs Past', 'Comparison', 'Invitation'],
-        '9': ['Passive Voice', 'Report Text', 'Present Perfect', 'Song Lyrics']
-    },
-    'SMA-Matematika': {
-        '10': ['Eksponen', 'Logaritma', 'Nilai Mutlak', 'SPLDV', 'SPtLDV', 'Matriks', 'Barisan dan Deret', 'Trigonometri', 'Fungsi Kuadrat'],
-        '11': ['Program Linear', 'Matriks', 'Transformasi', 'Induksi Matematika', 'Turunan', 'Integral', 'Lingkaran', 'Statistika'],
-        '12': ['Dimensi Tiga', 'Limit', 'Turunan', 'Integral', 'Peluang', 'Distribusi Normal']
-    },
-    'SMA-Fisika': {
-        '10': ['Hakikat Fisika', 'Vektor', 'Gerak Lurus', 'Gerak Parabola', 'Gerak Melingkar', 'Hukum Newton', 'Gravitasi', 'Usaha dan Energi', 'Momentum'],
-        '11': ['Dinamika Rotasi', 'Elastisitas', 'Fluida Statis', 'Fluida Dinamis', 'Suhu dan Kalor', 'Teori Kinetik Gas', 'Termodinamika'],
-        '12': ['Gelombang', 'Bunyi', 'Cahaya', 'Listrik Statis', 'Listrik Dinamis', 'Medan Magnet', 'Induksi Elektromagnetik', 'Fisika Modern']
-    },
-    'SMA-Kimia': {
-        '10': ['Hakikat Kimia', 'Perkembangan Model Atom', 'SPU', 'Ikatan Kimia', 'Stoikiometri', 'Larutan Elektrolit', 'Redoks'],
-        '11': ['Hidrokarbon', 'Termokimia', 'Laju Reaksi', 'Kesetimbangan', 'Larutan Asam Basa', 'Larutan Penyangga', 'Hidrolisis'],
-        '12': ['Sifat Koligatif', 'Redoks dan Elektrokimia', 'Unsur Golongan Utama', 'Unsur Transisi', 'Kimia Organik', 'Benzena']
-    },
-    'SMA-Biologi': {
-        '10': ['Keanekaragaman Hayati', 'Virus', 'Bakteri', 'Ekosistem'],
-        '11': ['Sel', 'Jaringan Tumbuhan', 'Jaringan Hewan', 'Sistem Gerak', 'Sistem Peredaran Darah'],
-        '12': ['Genetika', 'Evolusi', 'Bioteknologi', 'Metabolisme']
-    },
-    'SMA-Ekonomi': {
-        '10': ['Konsep Ekonomi', 'Masalah Ekonomi', 'Pelaku Ekonomi', 'Harga Pasar'],
-        '11': ['Pendapatan Nasional', 'Inflasi', 'Kebijakan Moneter', 'APBN'],
-        '12': ['Akuntansi', 'Laporan Keuangan', 'Koperasi', 'Manajemen']
-    },
-    'SMA-Sejarah': {
-        '10': ['Konsep Sejarah', 'Penelitian Sejarah', 'Kehidupan Awal', 'Kerajaan Hindu-Buddha'],
-        '11': ['Kerajaan Islam', 'Kolonialisme', 'Pergerakan Nasional', 'Proklamasi'],
-        '12': ['Orde Lama', 'Orde Baru', 'Reformasi', 'Sejarah Dunia']
-    },
-    'SMA-Geografi': {
-        '10': ['Konsep Geografi', 'Peta', 'Jarak dan Skala', 'Litosfer'],
-        '11': ['Atmosfer', 'Hidrosfer', 'Biosfer', 'Antroposfer'],
-        '12': ['Wilayah', 'Perwilayahan', 'Desa Kota', 'SIG']
-    },
-    'SMA-Bahasa Indonesia': {
-        '10': ['Teks LHO', 'Teks Eksposisi', 'Teks Anekdot', 'Teks Negosiasi', 'Debat'],
-        '11': ['Teks Prosedur', 'Teks Ceramah', 'Cerpen', 'Karya Ilmiah', 'Resensi'],
-        '12': ['Surat Lamaran', 'Artikel', 'Novel', 'Kritik Sastra']
-    },
-    'SMA-Bahasa Inggris': {
-        '10': ['Descriptive Text', 'Recount Text', 'Narrative Text', 'Procedure Text'],
-        '11': ['Explanation Text', 'Discussion Text', 'Review Text', 'Song'],
-        '12': ['News Item', 'Report Text', 'Analytical Exposition', 'Hortatory Exposition']
-    }
+const mapelByJenjangTKA = {
+    'SD': ['Matematika', 'Bahasa Indonesia'],
+    'SMP': ['Matematika', 'Bahasa Indonesia'],
+    'SMA': ['Matematika', 'Bahasa Indonesia', 'Bahasa Inggris']
+};
+
+const elemenTKA = {
+    'SD-Matematika': ['Bilangan', 'Geometri dan Pengukuran', 'Data'],
+    'SD-Bahasa Indonesia': ['Teks Informasi', 'Teks Fiksi'],
+    'SMP-Matematika': ['Bilangan', 'Aljabar', 'Geometri dan Pengukuran', 'Data dan Peluang'],
+    'SMP-Bahasa Indonesia': ['Teks Informasi', 'Teks Fiksi'],
+    'SMA-Matematika': ['Bilangan', 'Aljabar', 'Geometri dan Pengukuran', 'Data dan Peluang', 'Trigonometri'],
+    'SMA-Bahasa Indonesia': ['Teks Informasi', 'Teks Fiksi'],
+    'SMA-Bahasa Inggris': ['Teks B1', 'Teks A2']
 };
 
 // ========== STATE GLOBAL ==========
@@ -158,6 +832,15 @@ const filterKelas = document.getElementById('filterKelas');
 const btnApplyFilter = document.getElementById('btnApplyFilter');
 const btnResetFilter = document.getElementById('btnResetFilter');
 
+// ========== FUNGSI BANTU ==========
+function getJenjangFromKelas(kelas) {
+    if (kelas === 'SD' || kelas === 'SMP' || kelas === 'SMA') return kelas;
+    const kelasNum = parseInt(kelas);
+    if (kelasNum <= 6) return 'SD';
+    else if (kelasNum <= 9) return 'SMP';
+    else return 'SMA';
+}
+
 // ========== FUNGSI DROPDOWN DINAMIS ==========
 function updateKelasOptions() {
     const jenis = jenisSelect.value;
@@ -182,7 +865,14 @@ function updateKelasOptions() {
             { value: '11', label: 'SMA - Kelas 11' },
             { value: '12', label: 'SMA - Kelas 12' }
         ];
+    } else if (jenis === 'TKA') {
+        options = [
+            { value: 'SD', label: 'SD' },
+            { value: 'SMP', label: 'SMP' },
+            { value: 'SMA', label: 'SMA' }
+        ];
     } else {
+        // Harian & UAS menggunakan kelas angka
         options = [
             { value: '1', label: '1 SD' },
             { value: '2', label: '2 SD' },
@@ -217,17 +907,28 @@ function updateMapelOptions() {
         return;
     }
     
-    const kelasNum = parseInt(kelas);
-    let jenjang = '';
-    if (kelasNum <= 6) jenjang = 'SD';
-    else if (kelasNum <= 9) jenjang = 'SMP';
-    else jenjang = 'SMA';
-    
     let mapelList = [];
+    
     if (jenis === 'OSN') {
+        const jenjang = getJenjangFromKelas(kelas);
         mapelList = mapelByOSNLevel[jenjang] || [];
+    } else if (jenis === 'TKA') {
+        const jenjang = kelas; // karena untuk TKA kelas bisa 'SD','SMP','SMA'
+        mapelList = mapelByJenjangTKA[jenjang] || [];
     } else {
-        mapelList = mapelByJenjang[jenjang] || [];
+        // Harian atau UAS: ambil dari dropdownData
+        const kelasData = dropdownData[kelas];
+        if (kelasData && kelasData.mapel) {
+            mapelList = kelasData.mapel.map(m => {
+                // Bersihkan nama, misal "Bahasa Inggris (pilihan)" -> "Bahasa Inggris"
+                let nama = m.nama;
+                // Hapus "(pilihan)" jika ada
+                nama = nama.replace(/\s*\([^)]*\)/g, '').trim();
+                return nama;
+            });
+            // Hapus duplikat jika ada (misal karena pembersihan)
+            mapelList = [...new Set(mapelList)];
+        }
     }
     
     mapelSelect.innerHTML = '';
@@ -252,30 +953,58 @@ function updateMateriOptions() {
     const mapel = mapelSelect.value;
     const jenis = jenisSelect.value;
     
-    materiSelect.innerHTML = '<option value="">-- Pilih Materi --</option>';
+    // Untuk OSN dan TKA, sembunyikan materi
+    if (jenis === 'OSN' || jenis === 'TKA') {
+        materiGroup.style.display = 'none';
+        materiSelect.value = '';
+        return;
+    }
     
+    // Untuk UAS, sembunyikan materi (tidak perlu dropdown)
+    if (jenis === 'UAS') {
+        materiGroup.style.display = 'none';
+        materiSelect.value = '';
+        return;
+    }
+    
+    // Untuk Harian, tampilkan materi dari dropdownData (gabungan semester1 dan semester2)
     if (jenis === 'Harian' && kelas && mapel) {
-        materiGroup.style.display = 'block';
-        const kelasNum = parseInt(kelas);
-        let jenjang = '';
-        if (kelasNum <= 6) jenjang = 'SD';
-        else if (kelasNum <= 9) jenjang = 'SMP';
-        else jenjang = 'SMA';
-        
-        const key = jenjang + '-' + mapel;
-        let materiList = [];
-        if (materiKurikulumMerdeka[key] && materiKurikulumMerdeka[key][kelas]) {
-            materiList = materiKurikulumMerdeka[key][kelas];
+        const kelasData = dropdownData[kelas];
+        if (kelasData && kelasData.mapel) {
+            // Cari mapel yang namanya cocok (setelah dibersihkan)
+            const mapelObj = kelasData.mapel.find(m => {
+                const clean = m.nama.replace(/\s*\([^)]*\)/g, '').trim();
+                return clean === mapel;
+            });
+            if (mapelObj) {
+                // Gabungkan materi dari semester1 dan semester2
+                const materiGabungan = [];
+                if (mapelObj.semester1) materiGabungan.push(...mapelObj.semester1);
+                if (mapelObj.semester2) materiGabungan.push(...mapelObj.semester2);
+                // Hapus duplikat jika ada
+                const materiUnik = [...new Set(materiGabungan)];
+                
+                if (materiUnik.length > 0) {
+                    materiGroup.style.display = 'block';
+                    materiSelect.innerHTML = '<option value="">-- Pilih Materi --</option>';
+                    materiUnik.forEach(m => {
+                        const option = document.createElement('option');
+                        option.value = m;
+                        option.textContent = m;
+                        materiSelect.appendChild(option);
+                    });
+                } else {
+                    materiGroup.style.display = 'none';
+                    materiSelect.value = '';
+                }
+            } else {
+                materiGroup.style.display = 'none';
+                materiSelect.value = '';
+            }
+        } else {
+            materiGroup.style.display = 'none';
+            materiSelect.value = '';
         }
-        if (materiList.length === 0) {
-            materiList = ['Umum', 'Materi 1', 'Materi 2', 'Materi 3'];
-        }
-        materiList.forEach(m => {
-            const option = document.createElement('option');
-            option.value = m;
-            option.textContent = m;
-            materiSelect.appendChild(option);
-        });
     } else {
         materiGroup.style.display = 'none';
         materiSelect.value = '';
@@ -283,7 +1012,12 @@ function updateMateriOptions() {
 }
 
 function toggleSemesterOptions() {
-    semesterGroup.style.display = jenisSelect.value === 'UAS' ? 'block' : 'none';
+    // Semester hanya untuk UAS
+    if (jenisSelect.value === 'UAS') {
+        semesterGroup.style.display = 'block';
+    } else {
+        semesterGroup.style.display = 'none';
+    }
 }
 
 // ========== EVENT LISTENERS ==========
@@ -304,10 +1038,8 @@ btnExportPDF.addEventListener('click', () => {
 });
 
 btnHome.addEventListener('click', () => {
-    // Kembali ke halaman utama (filter section)
     soalSection.style.display = 'none';
     document.querySelector('.filter-section').scrollIntoView({ behavior: 'smooth' });
-    // Tampilkan kembali tombol asli untuk sesi berikutnya
     btnCekSemua.style.display = 'none';
     btnExportPDF.style.display = 'inline-flex';
     btnSelesai.style.display = 'inline-flex';
@@ -316,7 +1048,6 @@ btnHome.addEventListener('click', () => {
 });
 
 btnRedo.addEventListener('click', () => {
-    // Generate ulang dengan parameter yang sama
     generateSoal({
         kelas: kelasSelect.value,
         mapel: mapelSelect.value,
@@ -327,7 +1058,6 @@ btnRedo.addEventListener('click', () => {
         nama_user: namaUserInput.value.trim(),
         tingkatKesulitan: tingkatKesulitanSelect.value || 'Sedang'
     });
-    // Sembunyikan tombol baru, tampilkan tombol lama
     btnCekSemua.style.display = 'none';
     btnExportPDF.style.display = 'inline-flex';
     btnSelesai.style.display = 'inline-flex';
@@ -368,7 +1098,6 @@ async function loadHistory() {
         const data = await response.json();
         if (data.success) {
             allLogs = data.log || [];
-            // Isi filter kelas dengan opsi unik dari logs
             const kelasSet = new Set(allLogs.map(item => item.kelas).filter(k => k));
             filterKelas.innerHTML = '<option value="">Semua Kelas</option>';
             [...kelasSet].sort().forEach(k => {
@@ -576,11 +1305,13 @@ function validateAllFields() {
         jumlahInput.focus();
         return false;
     }
+    // Untuk Harian, materi wajib dipilih
     if (jenisSelect.value === 'Harian' && !materiSelect.value) {
         showNotification('❌ Materi untuk Ulangan Harian belum dipilih!', 'error');
         materiSelect.focus();
         return false;
     }
+    // Untuk UAS, semester wajib dipilih
     if (jenisSelect.value === 'UAS' && !semesterSelect.value) {
         showNotification('❌ Semester untuk UAS belum dipilih!', 'error');
         semesterSelect.focus();
@@ -628,6 +1359,30 @@ async function generateSoal(historyParams = null) {
         return;
     }
 
+    // Untuk TKA, materi diisi dengan elemen yang sesuai (tidak dari dropdown)
+    if (jenis === 'TKA') {
+        const jenjang = getJenjangFromKelas(kelas);
+        const key = jenjang + '-' + mapel;
+        const elemenList = elemenTKA[key] || [];
+        materi = elemenList.join(', ');
+    }
+    
+    // Untuk UAS, kumpulkan semua materi dari semester yang dipilih
+    if (jenis === 'UAS') {
+        const kelasData = dropdownData[kelas];
+        if (kelasData && kelasData.mapel) {
+            const mapelObj = kelasData.mapel.find(m => {
+                const clean = m.nama.replace(/\s*\([^)]*\)/g, '').trim();
+                return clean === mapel;
+            });
+            if (mapelObj) {
+                const semesterKey = semester === '1' ? 'semester1' : 'semester2';
+                const materiList = mapelObj[semesterKey] || [];
+                materi = materiList.join(', ');
+            }
+        }
+    }
+
     btnGenerate.disabled = true;
     btnGenerate.innerHTML = '<span class="spinner"></span> Menyiapkan soal...';
 
@@ -654,7 +1409,6 @@ async function generateSoal(historyParams = null) {
             tampilkanSoal();
             mulaiTimer();
             soalSection.style.display = 'block';
-            // Pastikan tombol asli muncul, tombol baru sembunyi
             btnCekSemua.style.display = 'none';
             btnExportPDF.style.display = 'inline-flex';
             btnSelesai.style.display = 'inline-flex';
@@ -674,7 +1428,7 @@ async function generateSoal(historyParams = null) {
         console.error(error);
     } finally {
         btnGenerate.disabled = false;
-        btnGenerate.innerHTML = '🎯 Mulai Latihan';
+        btnGenerate.innerHTML = '🚀 Mulai Latihan';
     }
 }
 
@@ -691,27 +1445,17 @@ function cleanLatex(text) {
     if (!text) return text;
     
     // --- PERBAIKAN TAMBAHAN UNTUK SPASI DAN KARAKTER ---
-    // Hapus semua backslash yang tidak perlu
     text = text.replace(/\\/g, '');
-    
-    // Perbaiki typo umum
     text = text.replace(/speeda/g, 'sepeda');
     text = text.replace(/kecepataan/g, 'kecepatan');
     text = text.replace(/awaInya/g, 'awalnya');
-    
-    // Tambah spasi setelah tanda baca
     text = text.replace(/\.([A-Za-z])/g, '. $1');
     text = text.replace(/\,([A-Za-z])/g, ', $1');
-    
-    // Tambah spasi antara huruf dan angka
     text = text.replace(/([a-zA-Z])(\d)/g, '$1 $2');
     text = text.replace(/(\d)([a-zA-Z])/g, '$1 $2');
-    
-    // Tambah spasi sebelum dan sesudah satuan (km, jam, cm, dll) jika menempel
     text = text.replace(/(\d)(km|jam|cm|liter|menit|m|kg|g)/gi, '$1 $2');
     text = text.replace(/(km|jam|cm|liter|menit|m|kg|g)([a-zA-Z])/gi, '$1 $2');
     
-    // Tambah spasi antara kata yang menyatu menggunakan daftar kata umum
     const commonWords = [
         'sebuah', 'mobil', 'motor', 'sepeda', 'melaju', 'dengan', 'kecepatan', 'rata-rata', 'rata', 
         'jarak', 'waktu', 'dalam', 'menempuh', 'berapakah', 'tentukan', 'nilai', 'hasil', 'volume', 
@@ -721,17 +1465,13 @@ function cleanLatex(text) {
         'penuh', 'dari', 'untuk', 'pada', 'oleh', 'atau', 'karena', 'maka', 'tersebut', 'adalah', 
         'merupakan', 'memiliki', 'dibutuhkan', 'waktu', 'yang', 'untuk', 'dengan', 'kecepa', 'tan'
     ];
-    // Urutkan dari terpanjang agar kata panjang didahulukan
     commonWords.sort((a, b) => b.length - a.length);
     commonWords.forEach(word => {
-        // Cari pola huruf + kata tanpa spasi
         let regex = new RegExp('([a-zA-Z0-9])(' + word + ')', 'gi');
         text = text.replace(regex, '$1 $2');
-        // Cari pola kata + huruf tanpa spasi
         regex = new RegExp('(' + word + ')([a-zA-Z0-9])', 'gi');
         text = text.replace(regex, '$1 $2');
     });
-    // --- AKHIR PERBAIKAN TAMBAHAN ---
     
     const typos = [
         ['memilikiikakar', 'memiliki akar'],
@@ -752,19 +1492,14 @@ function cleanLatex(text) {
     text = text.replace(/([a-zA-Z0-9])\s*\{\s*\\?\\?\\?wedge\s*(\d+)\s*\}/g, '$1^$2');
     text = text.replace(/\\\^(\d+)/g, '^$1');
     text = text.replace(/([a-zA-Z0-9])\s*\^\s*\{\s*(\d+)\s*\}/g, '$1^$2');
-    
     text = text.replace(/([a-zA-Z0-9])\s*\\?_(\d+)/g, '$1_$2');
     text = text.replace(/\\_(\d+)/g, '_$1');
-    
     text = text.replace(/\\?\\?\\?frac/g, '\\frac');
     text = text.replace(/frac\{/g, '\\frac{');
     text = text.replace(/\\frac\s*{([^}]*)}\s*{([^}]*)}/g, '\\frac{$1}{$2}');
-    
     text = text.replace(/\\?\\?\\?cdot\s+cdot/g, '\\cdot');
     text = text.replace(/\\?\\?\\?cdot/g, '\\cdot');
-    
     text = text.replace(/\\\\/g, '\\');
-    
     text = text.replace(/\{\s+/g, '{');
     text = text.replace(/\s+\}/g, '}');
     
@@ -794,14 +1529,11 @@ function tampilkanSoal() {
         const soal = currentSoal[i];
         let pilihan = soal.pilihan;
         
-        // Pastikan pilihan adalah array dan memiliki minimal 4 elemen
         if (!Array.isArray(pilihan) || pilihan.length < 4) {
             pilihan = ['A. Pilihan A', 'B. Pilihan B', 'C. Pilihan C', 'D. Pilihan D'];
         }
         
-        // Perbaiki pilihan jika masih placeholder (untuk soal dummy)
         if (pilihan[0].includes('Pilihan A') && pilihan[1].includes('Pilihan B')) {
-            // Generate pilihan numerik sederhana berdasarkan indeks soal
             const base = (i + 1) * 10;
             pilihan = [
                 `A. ${base}`,
@@ -911,7 +1643,6 @@ async function selesaiLatihan() {
     
     const nama = namaUserInput.value.trim() || 'Anonim';
     
-    // Buat ID unik
     const id = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
     
     const hasil = {
@@ -932,7 +1663,6 @@ async function selesaiLatihan() {
         tanggal: new Date().toISOString()
     };
     
-    // Simpan ke localStorage
     let hasilBackup = [];
     try {
         const existing = localStorage.getItem('bankSoalBackup');
@@ -947,7 +1677,6 @@ async function selesaiLatihan() {
     await syncPendingData(allLogs);
     await loadHistory();
     
-    // Sembunyikan tombol asli, tampilkan tombol baru
     btnCekSemua.style.display = 'none';
     btnExportPDF.style.display = 'none';
     btnSelesai.style.display = 'none';
@@ -957,7 +1686,7 @@ async function selesaiLatihan() {
     clearInterval(timerInterval);
 }
 
-// ========== SYNC PENDING DATA (MENGGUNAKAN POST DENGAN TEXT/PLAIN) ==========
+// ========== SYNC PENDING DATA ==========
 async function syncPendingData(existingLogs = []) {
     let pending = [];
     try {
@@ -1022,7 +1751,6 @@ async function syncPendingData(existingLogs = []) {
         showNotification(`${pending.length} data masih pending.`, 'warning');
     }
     
-    // Refresh riwayat dari server setelah sinkronisasi
     await loadHistory();
 }
 
