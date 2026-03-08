@@ -1716,83 +1716,86 @@ function handleError(data) {
 // ========== FUNGSI CLEAN LATEX (DENGAN PERBAIKAN SPASI) ==========
 function cleanLatex(text) {
     if (!text) return text;
-    
-    // --- PERBAIKAN TAMBAHAN UNTUK SPASI DAN KARAKTER ---
-    text = text.replace(/\\/g, '');
+
+    // 1. Pre-cleaning: Hapus HTML dan Markdown
+    text = text.replace(/<[^>]*>?/gm, '');
+    text = text.replace(/\*\*|###|##|#/g, '');
+
+    // 2. Normalisasi backslash (\\ menjadi \)
+    text = text.replace(/\\\\+/g, '\\');
+
+    // 3. Perbaiki typo umum dan spasi tanda baca
     text = text.replace(/speeda/g, 'sepeda');
     text = text.replace(/kecepataan/g, 'kecepatan');
     text = text.replace(/awaInya/g, 'awalnya');
     text = text.replace(/\.([A-Za-z])/g, '. $1');
     text = text.replace(/\,([A-Za-z])/g, ', $1');
-    text = text.replace(/([a-zA-Z])(\d)/g, '$1 $2');
-    text = text.replace(/(\d)([a-zA-Z])/g, '$1 $2');
-    text = text.replace(/(\d)(km|jam|cm|liter|menit|m|kg|g)/gi, '$1 $2');
-    text = text.replace(/(km|jam|cm|liter|menit|m|kg|g)([a-zA-Z])/gi, '$1 $2');
-    
+
+    // 3.5 Perbaikan frase khusus (gabungan kata yang sering salah)
+    const phraseFixes = [
+        [/duduli/g, 'dadu'],
+        [/dempersekali/g, 'dilempar sekali'],
+        [/berapeluang/g, 'berapa peluang'],
+        [/muncu\\lnya/g, 'munculnya'],
+        [/matadaduprima/g, 'mata dadu prima']
+    ];
+    phraseFixes.forEach(([pattern, replacement]) => {
+        text = text.replace(pattern, replacement);
+    });
+
+    // 4. Perbaiki satuan (10km -> 10 km)
+    text = text.replace(/(\d+)(km|jam|cm|liter|menit|m|kg|g)(?![a-zA-Z])/gi, '$1 $2');
+
+    // 5. Perbaiki fungsi logaritma: \log2 -> \log_{2}
+    text = text.replace(/\\log(\d+)/g, '\\log_{$1}');
+
+    // 6. Pastikan fungsi trigonometri dan akar memiliki backslash (tanpa lookbehind)
+    const funcs = ['sin', 'cos', 'tan', 'log', 'ln', 'sqrt'];
+    funcs.forEach(f => {
+        // Ganti jika f tidak didahului backslash
+        text = text.replace(new RegExp('(^|[^\\\\])' + f, 'g'), '$1\\' + f);
+    });
+
+    // 7. Pisahkan kata umum yang tergabung
     const commonWords = [
-        'sebuah', 'mobil', 'motor', 'sepeda', 'melaju', 'dengan', 'kecepatan', 'rata-rata', 'rata', 
-        'jarak', 'waktu', 'dalam', 'menempuh', 'berapakah', 'tentukan', 'nilai', 'hasil', 'volume', 
-        'luas', 'panjang', 'lebar', 'tinggi', 'debit', 'liter', 'menit', 'jam', 'km', 'cm', 'persegi', 
-        'segitiga', 'lingkaran', 'tabung', 'balok', 'kubus', 'prisma', 'kerucut', 'bola', 'diameter', 
-        'jari-jari', 'alas', 'sisi', 'rusuk', 'titik', 'garis', 'sudut', 'bak', 'mandi', 'air', 'diisi', 
-        'penuh', 'dari', 'untuk', 'pada', 'oleh', 'atau', 'karena', 'maka', 'tersebut', 'adalah', 
-        'merupakan', 'memiliki', 'dibutuhkan', 'waktu', 'yang', 'untuk', 'dengan', 'kecepa', 'tan'
+        'sebuah', 'mobil', 'motor', 'sepeda', 'melaju', 'dengan', 'kecepatan', 'rata-rata',
+        'jarak', 'waktu', 'dalam', 'menempuh', 'berapakah', 'tentukan', 'nilai', 'hasil',
+        'volume', 'luas', 'panjang', 'lebar', 'tinggi', 'debit', 'liter', 'menit', 'jam',
+        'km', 'cm', 'persegi', 'segitiga', 'lingkaran', 'tabung', 'balok', 'kubus',
+        'prisma', 'kerucut', 'bola', 'diameter', 'jari-jari', 'alas', 'sisi', 'rusuk',
+        'titik', 'garis', 'sudut', 'maka', 'adalah', 'akar', 'dan', 'dadu', 'lempar', 'peluang', 'muncul', 'prima', 'sekali', 'mata'
     ];
     commonWords.sort((a, b) => b.length - a.length);
     commonWords.forEach(word => {
-        let regex = new RegExp('([a-zA-Z0-9])(' + word + ')', 'gi');
+        let regex = new RegExp('([a-z0-9])(' + word + ')\\b', 'gi');
         text = text.replace(regex, '$1 $2');
-        regex = new RegExp('(' + word + ')([a-zA-Z0-9])', 'gi');
+        regex = new RegExp('\\b(' + word + ')([a-z0-9])', 'gi');
         text = text.replace(regex, '$1 $2');
     });
-    
-    const typos = [
-        ['memilikiikakar', 'memiliki akar'],
-        ['makanilai', 'maka nilai'],
-        ['bilangangrafen', 'bilangan real'],
-        ['positi f', 'positif'],
-        ['tidaksamadenganom', 'tidak sama dengan nol'],
-        ['nilainiminum', 'nilai minimum'],
-        ['persamaankuadrat', 'persamaan kuadrat'],
-        ['berikutin', 'berikut ini'],
-        ['denganom', 'dengan nol'],
-        ['grafikfungsi', 'grafik fungsi'],
-        ['tentukanlah', 'tentukan'],
-        ['berapakah', 'berapa'],
-    ];
-    typos.forEach(t => { text = text.replace(new RegExp(t[0], 'g'), t[1]); });
-    
-    text = text.replace(/([a-zA-Z0-9])\s*\{\s*\\?\\?\\?wedge\s*(\d+)\s*\}/g, '$1^$2');
-    text = text.replace(/\\\^(\d+)/g, '^$1');
-    text = text.replace(/([a-zA-Z0-9])\s*\^\s*\{\s*(\d+)\s*\}/g, '$1^$2');
-    text = text.replace(/([a-zA-Z0-9])\s*\\?_(\d+)/g, '$1_$2');
-    text = text.replace(/\\_(\d+)/g, '_$1');
-    text = text.replace(/\\?\\?\\?frac/g, '\\frac');
-    text = text.replace(/frac\{/g, '\\frac{');
-    text = text.replace(/\\frac\s*{([^}]*)}\s*{([^}]*)}/g, '\\frac{$1}{$2}');
-    text = text.replace(/\\?\\?\\?cdot\s+cdot/g, '\\cdot');
-    text = text.replace(/\\?\\?\\?cdot/g, '\\cdot');
-    text = text.replace(/\\\\/g, '\\');
-    text = text.replace(/\{\s+/g, '{');
-    text = text.replace(/\s+\}/g, '}');
-    
-    ['sin','cos','tan','log','ln','sqrt'].forEach(f => {
-        text = text.replace(new RegExp('\\\\?\\\\?\\\\?'+f, 'g'), '\\'+f);
-    });
-    
-    text = text.replace(/\s*\+\s*/g, ' + ');
-    text = text.replace(/\s*\-\s*/g, ' - ');
-    text = text.replace(/\s*\=\s*/g, ' = ');
-    
-    const hasLatex = /\\[a-zA-Z]+|[\^_]|\{[0-9]+\}|\\frac|\\cdot|\\sqrt/.test(text);
-    if (hasLatex && !text.includes('$') && !text.includes('\\(')) {
-        text = '$' + text + '$';
-    }
-    
+
+    // 8. Perbaiki format LaTeX: pangkat, subscript, pecahan
+    text = text.replace(/([a-zA-Z0-9])\s*\^\s*\{?(\d+)\}?/g, '$1^{$2}');
+    text = text.replace(/([a-zA-Z0-9])\s*_\s*\{?(\d+)\}?/g, '$1_{$2}');
+    text = text.replace(/\\?frac\s*\{?([^{}]*)\}?\s*\{?([^{}]*)\}?/g, '\\frac{$1}{$2}');
+    text = text.replace(/(\\cdot\s*)+/g, '\\cdot ');
+
+    // 9. Perbaiki spasi di sekitar operator (+, =, -) dengan aman
+    text = text.replace(/([^\\])\s*([+\-=])\s*([^\\])/g, '$1 $2 $3');
+
+    // 10. Seimbangkan kurung kurawal
     let open = (text.match(/\{/g) || []).length;
     let close = (text.match(/\}/g) || []).length;
     while (open > close) { text += '}'; close++; }
+
+    // 11. Tambahkan delimiter $ jika diperlukan (sederhana dan aman)
+    const hasLatexCommand = /\\[a-zA-Z]+|[\^_]|\{.*\}/.test(text);
+    const isAlreadyWrapped = text.includes('$') || text.includes('\\(') || text.includes('\\)');
     
+    if (hasLatexCommand && !isAlreadyWrapped) {
+        // Bungkus seluruh teks dengan $ agar MathJax merender
+        text = '$' + text + '$';
+    }
+
     return text;
 }
 
