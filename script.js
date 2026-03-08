@@ -1,12 +1,12 @@
 // ============================================
 // SCRIPT.JS - AI LEARNING APP (KURIKULUM MERDEKA)
-// Versi Stabil - Integrasi data per semester (UAS full materi)
+// Versi Stabil - Backup lokal dengan kadaluarsa 1 jam
 // ============================================
 
 // KONFIGURASI - GANTI DENGAN URL APPS SCRIPT ANDA!
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzUdIyXf5czqwnZjGK1Ech1lWtx-7QyR90FJE3GqpBgb3_MyPLO3a3p5mMX-xYPLNZBiA/exec';
 
-// ========== DATA DROPDOWN BARU (PER SEMESTER) ==========
+// ========== DATA DROPDOWN UNTUK HARIAN & UAS (PER KELAS) ==========
 const dropdownData = {
   "1": {
     "nama": "Kelas 1 SD",
@@ -775,13 +775,275 @@ const dropdownData = {
   }
 };
 
-// ========== DATA UNTUK OSN DAN TKA (tetap) ==========
-const mapelByOSNLevel = {
-    'SD': ['Matematika', 'Ilmu Pengetahuan Alam (IPA)'],
-    'SMP': ['Matematika', 'Ilmu Pengetahuan Alam (IPA)', 'Ilmu Pengetahuan Sosial (IPS)'],
-    'SMA': ['Matematika', 'Fisika', 'Kimia', 'Biologi', 'Informatika/Komputer', 'Astronomi', 'Ekonomi', 'Kebumian', 'Geografi']
+// ========== DATA UNTUK OSN (PER JENJANG) ==========
+const osnData = {
+  "sd": {
+    "mapel": [
+      {
+        "nama": "Matematika",
+        "topik": [
+          { "nama": "Bilangan", "sub": [] },
+          { "nama": "Aritmatika", "sub": [] },
+          { "nama": "Geometri", "sub": [] },
+          { "nama": "Kombinatorik", "sub": [] },
+          { "nama": "Statistika, data, dan pengukuran", "sub": [] }
+        ]
+      },
+      {
+        "nama": "Ilmu Pengetahuan Sosial (IPS)",
+        "topik": [
+          {
+            "nama": "Penampakan Fenomena Alam Sosial dan Budaya",
+            "sub": [
+              "Peta",
+              "Letak geografis Indonesia",
+              "Keanekaragaman hayati",
+              "Sumber Daya Alam",
+              "Perubahan Wilayah",
+              "Kenampakan Alam dan Sosial",
+              "Gejala Alam",
+              "Bentang Alam dan Kaitannya dengan profesi masyarakat"
+            ]
+          },
+          {
+            "nama": "Keragaman, Interaksi dan Perubahan Sosial",
+            "sub": [
+              "Nilai Sosial",
+              "Nilai dan Norma",
+              "Peran dan Tanggung Jawab Sosial",
+              "Interaksi Sosial",
+              "Proses Sosial",
+              "Keragaman Sosial Budaya",
+              "Globalisasi dan Perubahan Sosial"
+            ]
+          },
+          {
+            "nama": "Kegiatan Ekonomi, Peran dan Posisi Indonesia dalam Ekonomi Global",
+            "sub": [
+              "Masalah Ekonomi",
+              "Nilai Guna",
+              "Kegiatan Ekonomi Negara ASEAN dan Perannya Dalam Ekonomi Global",
+              "Peran Pelaku Ekonomi Indonesia",
+              "Kegiatan Ekspor-Impor",
+              "Ekonomi Maritim dan Agraris",
+              "Pembangunan Ekonomi Berkelanjutan"
+            ]
+          },
+          {
+            "nama": "Perkembangan Sejarah Indonesia",
+            "sub": [
+              "Pembentukan awal budaya Masyarakat Indonesia",
+              "Perkembangan Hindu Budha",
+              "Pengaruh Islam",
+              "Kolonialisme dan imperialisme",
+              "Perlawanan Masyarakat Indonesia terhadap Kolonialisme",
+              "Perjuangan mencapai kemerdekaan",
+              "Tokoh lokal dan Nasional dalam mencapai dan mempertahankan kemerdekaan"
+            ]
+          }
+        ]
+      },
+      {
+        "nama": "Ilmu Pengetahuan Alam (IPA)",
+        "topik": [
+          { "nama": "Isu Kesehatan Lingkungan dan Teknologi", "sub": [] },
+          { "nama": "Ekologi, Lingkungan, dan Pelestarian Sumber Daya Alam", "sub": [] },
+          { "nama": "Proses dan Mekanisme yang Terjadi pada Makhluk Hidup", "sub": [] },
+          { "nama": "Bentuk Energi dan Perubahannya", "sub": [] },
+          { "nama": "Listrik dan Magnet", "sub": [] },
+          { "nama": "Gelombang dan Optik", "sub": [] },
+          { "nama": "Bumi, Tata Surya, dan Antariksa", "sub": [] }
+        ]
+      }
+    ]
+  },
+  "smp": {
+    "mapel": [
+      {
+        "nama": "Matematika",
+        "topik": [
+          { "nama": "Bilangan", "sub": [] },
+          { "nama": "Aritmatika", "sub": [] },
+          { "nama": "Geometri", "sub": [] },
+          { "nama": "Statistika, data, dan pengukuran", "sub": [] },
+          { "nama": "Kombinatorik", "sub": [] }
+        ]
+      },
+      {
+        "nama": "Ilmu Pengetahuan Alam (IPA)",
+        "topik": [
+          { "nama": "Besaran, satuan, dan pengukuran", "sub": [] },
+          { "nama": "Zat dan kalor", "sub": [] },
+          { "nama": "Energi", "sub": [] },
+          { "nama": "Gerak dan gaya", "sub": [] },
+          { "nama": "Fluida", "sub": [] },
+          { "nama": "Getaran, gelombang, dan bunyi", "sub": [] },
+          { "nama": "Cahaya dan optika", "sub": [] },
+          { "nama": "Kelistrikan dan kemagnetan", "sub": [] },
+          { "nama": "Ilmu pengetahuan bumi dan antariksa (IPBA)", "sub": [] },
+          { "nama": "Makhluk hidup dan lingkungannya", "sub": [] },
+          { "nama": "Keanekaragaman dan pengelompokan makhluk hidup", "sub": [] },
+          { "nama": "Organisasi kehidupan", "sub": [] },
+          { "nama": "Ekologi", "sub": [] },
+          { "nama": "Struktur dan fungsi tumbuhan", "sub": [] },
+          { "nama": "Sistem-sistem pada manusia dan hewan", "sub": [] },
+          { "nama": "Pewarisan sifat", "sub": [] },
+          { "nama": "Bioteknologi", "sub": [] },
+          { "nama": "Forensik", "sub": [] }
+        ]
+      },
+      {
+        "nama": "Ilmu Pengetahuan Sosial (IPS)",
+        "topik": [
+          {
+            "nama": "Geografi",
+            "sub": [
+              "Menganalisis interaksi antar-ruang dan wilayah (potensi daerah dan kondisi geografis)",
+              "Pengaruh perubahan keruangan akibat faktor alam dan manusia",
+              "Perubahan keruangan di Asia dan sekitarnya"
+            ]
+          },
+          {
+            "nama": "Sosiologi",
+            "sub": [
+              "Kelembagaan sosial",
+              "Interaksi sosial",
+              "Penyimpangan sosial",
+              "Mobilitas sosial",
+              "Pluralitas, konflik, dan integrasi sosial",
+              "Pemberdayaan masyarakat"
+            ]
+          },
+          {
+            "nama": "Sejarah",
+            "sub": [
+              "Perubahan masyarakat pada masa pra-aksara, Hindu Budha, Islam, dalam bidang sosial, ekonomi, politik",
+              "Perubahan dan kesinambungan ruang dari masa kemerdekaan sampai awal reformasi",
+              "Mengevaluasi perubahan dan kesinambungan dari masa penjajahan sampai tumbuhnya semangat kebangsaan"
+            ]
+          },
+          {
+            "nama": "Ekonomi",
+            "sub": [
+              "Pemenuhan kebutuhan manusia",
+              "Peran pelaku ekonomi",
+              "Kegiatan perekonomian",
+              "Pembangunan ekonomi"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "sma": {
+    "mapel": [
+      {
+        "nama": "Informatika",
+        "topik": [
+          { "nama": "Dasar-dasar Pemrograman", "sub": [] },
+          { "nama": "Operasi Logika dan Bitwise", "sub": [] },
+          { "nama": "Aritmetika", "sub": [] },
+          { "nama": "Aturan Berhitung", "sub": [] },
+          { "nama": "Rekursi", "sub": [] },
+          { "nama": "Pencarian dan Pengurutan", "sub": [] },
+          { "nama": "Strategi Pemecahan Masalah", "sub": [] },
+          { "nama": "Struktur Data", "sub": [] },
+          { "nama": "Graf dan Tree", "sub": [] },
+          { "nama": "Geometri Dasar", "sub": [] }
+        ]
+      },
+      {
+        "nama": "Geografi",
+        "topik": [
+          { "nama": "Iklim dan Perubahan Iklim", "sub": [] },
+          { "nama": "Kebencanaan dan Manajemen Bencana", "sub": [] },
+          { "nama": "Sumber Daya dan Manajemen Sumber Daya", "sub": [] },
+          { "nama": "Geografi Lingkungan dan Pembangunan Berkelanjutan", "sub": [] },
+          { "nama": "Geologi, Geomorfologi, dan Penggunaan Lahan", "sub": [] },
+          { "nama": "Geografi Pertanian dan Permasalahan Pangan", "sub": [] },
+          { "nama": "Kependudukan dan Dinamika Penduduk", "sub": [] },
+          { "nama": "Geografi Ekonomi dan Globalisasi", "sub": [] },
+          { "nama": "Geografi Pembangunan dan Ketimpangan Spasial", "sub": [] },
+          { "nama": "Geografi Kota, Peremajaan Kota, dan Perencanaan Kota", "sub": [] },
+          { "nama": "Pariwisata dan Manajemen Pariwisata", "sub": [] },
+          { "nama": "Geografi Budaya dan Identitas Regional", "sub": [] },
+          { "nama": "Perpetaan dan Interpretasi Informasi Geospasial", "sub": [] }
+        ]
+      },
+      {
+        "nama": "Fisika",
+        "topik": [
+          { "nama": "Kinematika", "sub": [] },
+          { "nama": "Dinamika Linier", "sub": [] },
+          { "nama": "Dinamika Rotasi", "sub": [] },
+          { "nama": "Gravitasi", "sub": [] },
+          { "nama": "Listrik Magnet", "sub": [] },
+          { "nama": "Termofisika", "sub": [] }
+        ]
+      },
+      {
+        "nama": "Ekonomi",
+        "topik": [
+          { "nama": "Kebijakan moneter dan fiskal", "sub": [] },
+          { "nama": "Data ekonomi makro", "sub": [] },
+          { "nama": "Mata uang, serikat mata uang, nilai tukar, dan paritas suku bunga", "sub": [] },
+          { "nama": "Ekonomi lingkungan dan pembangunan berkelanjutan", "sub": [] },
+          { "nama": "Fluktuasi dan krisis ekonomi", "sub": [] },
+          { "nama": "Institusi dan ketidaksetaraan", "sub": [] }
+        ]
+      },
+      {
+        "nama": "Biologi",
+        "topik": [
+          { "nama": "Biologi sel dan molekuler", "sub": [] },
+          { "nama": "Anatomi dan Fisiologi Tumbuhan", "sub": [] },
+          { "nama": "Anatomi dan Fisiologi Hewan", "sub": [] },
+          { "nama": "Genetika dan Evolusi", "sub": [] },
+          { "nama": "Etologi", "sub": [] },
+          { "nama": "Ekologi", "sub": [] },
+          { "nama": "Biosistematika", "sub": [] }
+        ]
+      },
+      {
+        "nama": "Astronomi",
+        "topik": [
+          { "nama": "Astrofisika Dasar", "sub": [] },
+          { "nama": "Tata Surya", "sub": [] },
+          { "nama": "Penerapan Sistem Koordinat, Estimasi", "sub": [] },
+          { "nama": "Statistik dan Identifikasi Sumber Galat", "sub": [] }
+        ]
+      },
+      {
+        "nama": "Kebumian",
+        "topik": [
+          { "nama": "Bumi sebagai Sistem yang Dinamis", "sub": [] },
+          { "nama": "Identifikasi dan Analisis Sistem Bumi", "sub": [] },
+          { "nama": "Interaksi dan Siklus dalam Sistem Bumi", "sub": [] }
+        ]
+      },
+      {
+        "nama": "Kimia",
+        "topik": [
+          { "nama": "Sintesis senyawa organik dan kompleks", "sub": [] },
+          { "nama": "Analisis kualitatif ion dan senyawa organik", "sub": [] },
+          { "nama": "Struktur glukosa dan fruktosa", "sub": [] },
+          { "nama": "Sintesis organik multilangkah sederhana", "sub": [] }
+        ]
+      },
+      {
+        "nama": "Matematika",
+        "topik": [
+          { "nama": "Aljabar", "sub": [] },
+          { "nama": "Geometri", "sub": [] },
+          { "nama": "Kombinatorika", "sub": [] },
+          { "nama": "Teori Bilangan", "sub": [] }
+        ]
+      }
+    ]
+  }
 };
 
+// ========== DATA UNTUK TKA (tetap) ==========
 const mapelByJenjangTKA = {
     'SD': ['Matematika', 'Bahasa Indonesia'],
     'SMP': ['Matematika', 'Bahasa Indonesia'],
@@ -851,19 +1113,11 @@ function updateKelasOptions() {
     
     let options = [];
     if (jenis === 'OSN') {
+        // Untuk OSN hanya menampilkan jenjang
         options = [
-            { value: '1', label: 'SD - Kelas 1' },
-            { value: '2', label: 'SD - Kelas 2' },
-            { value: '3', label: 'SD - Kelas 3' },
-            { value: '4', label: 'SD - Kelas 4' },
-            { value: '5', label: 'SD - Kelas 5' },
-            { value: '6', label: 'SD - Kelas 6' },
-            { value: '7', label: 'SMP - Kelas 7' },
-            { value: '8', label: 'SMP - Kelas 8' },
-            { value: '9', label: 'SMP - Kelas 9' },
-            { value: '10', label: 'SMA - Kelas 10' },
-            { value: '11', label: 'SMA - Kelas 11' },
-            { value: '12', label: 'SMA - Kelas 12' }
+            { value: 'SD', label: 'SD' },
+            { value: 'SMP', label: 'SMP' },
+            { value: 'SMA', label: 'SMA' }
         ];
     } else if (jenis === 'TKA') {
         options = [
@@ -910,8 +1164,12 @@ function updateMapelOptions() {
     let mapelList = [];
     
     if (jenis === 'OSN') {
-        const jenjang = getJenjangFromKelas(kelas);
-        mapelList = mapelByOSNLevel[jenjang] || [];
+        // Ambil dari osnData berdasarkan jenjang (kelas sudah berupa 'SD','SMP','SMA' - kita lower case)
+        const jenjang = kelas.toLowerCase();
+        const data = osnData[jenjang];
+        if (data && data.mapel) {
+            mapelList = data.mapel.map(m => m.nama);
+        }
     } else if (jenis === 'TKA') {
         const jenjang = kelas; // karena untuk TKA kelas bisa 'SD','SMP','SMA'
         mapelList = mapelByJenjangTKA[jenjang] || [];
@@ -922,11 +1180,9 @@ function updateMapelOptions() {
             mapelList = kelasData.mapel.map(m => {
                 // Bersihkan nama, misal "Bahasa Inggris (pilihan)" -> "Bahasa Inggris"
                 let nama = m.nama;
-                // Hapus "(pilihan)" jika ada
                 nama = nama.replace(/\s*\([^)]*\)/g, '').trim();
                 return nama;
             });
-            // Hapus duplikat jika ada (misal karena pembersihan)
             mapelList = [...new Set(mapelList)];
         }
     }
@@ -953,35 +1209,39 @@ function updateMateriOptions() {
     const mapel = mapelSelect.value;
     const jenis = jenisSelect.value;
     
-    // Untuk OSN dan TKA, sembunyikan materi
-    if (jenis === 'OSN' || jenis === 'TKA') {
+    // Untuk OSN, tidak perlu dropdown materi
+    if (jenis === 'OSN') {
         materiGroup.style.display = 'none';
         materiSelect.value = '';
         return;
     }
     
-    // Untuk UAS, sembunyikan materi (tidak perlu dropdown)
+    // Untuk TKA, sembunyikan materi
+    if (jenis === 'TKA') {
+        materiGroup.style.display = 'none';
+        materiSelect.value = '';
+        return;
+    }
+    
+    // Untuk UAS, sembunyikan materi
     if (jenis === 'UAS') {
         materiGroup.style.display = 'none';
         materiSelect.value = '';
         return;
     }
     
-    // Untuk Harian, tampilkan materi dari dropdownData (gabungan semester1 dan semester2)
+    // Untuk Harian, tampilkan materi dari dropdownData
     if (jenis === 'Harian' && kelas && mapel) {
         const kelasData = dropdownData[kelas];
         if (kelasData && kelasData.mapel) {
-            // Cari mapel yang namanya cocok (setelah dibersihkan)
             const mapelObj = kelasData.mapel.find(m => {
                 const clean = m.nama.replace(/\s*\([^)]*\)/g, '').trim();
                 return clean === mapel;
             });
             if (mapelObj) {
-                // Gabungkan materi dari semester1 dan semester2
                 const materiGabungan = [];
                 if (mapelObj.semester1) materiGabungan.push(...mapelObj.semester1);
                 if (mapelObj.semester2) materiGabungan.push(...mapelObj.semester2);
-                // Hapus duplikat jika ada
                 const materiUnik = [...new Set(materiGabungan)];
                 
                 if (materiUnik.length > 0) {
@@ -993,22 +1253,14 @@ function updateMateriOptions() {
                         option.textContent = m;
                         materiSelect.appendChild(option);
                     });
-                } else {
-                    materiGroup.style.display = 'none';
-                    materiSelect.value = '';
+                    return;
                 }
-            } else {
-                materiGroup.style.display = 'none';
-                materiSelect.value = '';
             }
-        } else {
-            materiGroup.style.display = 'none';
-            materiSelect.value = '';
         }
-    } else {
-        materiGroup.style.display = 'none';
-        materiSelect.value = '';
     }
+    
+    materiGroup.style.display = 'none';
+    materiSelect.value = '';
 }
 
 function toggleSemesterOptions() {
@@ -1317,6 +1569,7 @@ function validateAllFields() {
         semesterSelect.focus();
         return false;
     }
+    // OSN dan TKA tidak perlu validasi materi
     return true;
 }
 
@@ -1359,9 +1612,29 @@ async function generateSoal(historyParams = null) {
         return;
     }
 
-    // Untuk TKA, materi diisi dengan elemen yang sesuai (tidak dari dropdown)
+    // Untuk OSN, kumpulkan semua topik dari mapel yang dipilih
+    if (jenis === 'OSN') {
+        const jenjang = kelas.toLowerCase(); // kelas berisi 'SD','SMP','SMA'
+        const data = osnData[jenjang];
+        if (data && data.mapel) {
+            const mapelObj = data.mapel.find(m => m.nama === mapel);
+            if (mapelObj && mapelObj.topik) {
+                // Gabungkan semua topik, dan sub topik jika ada
+                const semuaTopik = mapelObj.topik.map(t => {
+                    if (t.sub && t.sub.length > 0) {
+                        return `${t.nama} (${t.sub.join(', ')})`;
+                    } else {
+                        return t.nama;
+                    }
+                });
+                materi = semuaTopik.join('; ');
+            }
+        }
+    }
+
+    // Untuk TKA, materi diisi dengan elemen yang sesuai
     if (jenis === 'TKA') {
-        const jenjang = getJenjangFromKelas(kelas);
+        const jenjang = kelas; // karena untuk TKA kelas bisa 'SD','SMP','SMA'
         const key = jenjang + '-' + mapel;
         const elemenList = elemenTKA[key] || [];
         materi = elemenList.join(', ');
@@ -1415,7 +1688,7 @@ async function generateSoal(historyParams = null) {
             btnHome.style.display = 'none';
             btnRedo.style.display = 'none';
             let msg = '🤖 Soal digenerate dengan AI';
-            if (materi) msg += ' - Materi: ' + materi;
+            if (materi) msg += ' - Materi: ' + (materi.length > 50 ? materi.substring(0,50)+'...' : materi);
             if (semester) msg += ' - Semester ' + semester;
             msg += ` - Tingkat: ${tingkatKesulitan}`;
             showNotification(msg, 'success');
@@ -1660,7 +1933,8 @@ async function selesaiLatihan() {
         soal_json: currentSoal,
         jawaban_user: jawabanUser,
         waktu_pengerjaan: timerDisplay.innerText,
-        tanggal: new Date().toISOString()
+        tanggal: new Date().toISOString(),
+        timestamp: Date.now() // <-- Tambahkan timestamp untuk kadaluarsa
     };
     
     let hasilBackup = [];
@@ -1695,6 +1969,19 @@ async function syncPendingData(existingLogs = []) {
     } catch (e) {
         return;
     }
+    if (pending.length === 0) return;
+
+    // Filter data yang masih fresh (kurang dari 1 jam)
+    const now = Date.now();
+    const oneHour = 3600000; // 1 jam dalam milidetik
+    const freshPending = pending.filter(item => item.timestamp && (now - item.timestamp < oneHour));
+    
+    // Jika ada data yang kadaluarsa, hapus dari localStorage
+    if (freshPending.length !== pending.length) {
+        localStorage.setItem('bankSoalBackup', JSON.stringify(freshPending));
+        pending = freshPending;
+    }
+
     if (pending.length === 0) return;
 
     const existingIds = new Set(existingLogs.map(log => log.id).filter(id => id));
