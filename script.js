@@ -4,7 +4,7 @@
 // ============================================
 
 // KONFIGURASI - GANTI DENGAN URL APPS SCRIPT ANDA!
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzUdIyXf5czqwnZjGK1Ech1lWtx-7QyR90FJE3GqpBgb3_MyPLO3a3p5mMX-xYPLNZBiA/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwfGi2lhmniXor3hzeSYOFmW5rH2GtdtaNkqXF_iFSbY5u5plDDQRrSWbRIFtGw0wWgqw/exec';
 
 // ========== DATA DROPDOWN UNTUK HARIAN & UAS (PER KELAS) ==========
 const dropdownData = {
